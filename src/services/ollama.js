@@ -8,21 +8,35 @@ export class OllamaError extends Error {
 }
 
 const api = (path) =>
+<<<<<<< HEAD
+  `${AI.baseUrl.replace(/\/+$/, '')}${path}`
+=======
   AI.baseUrl.replace(/\/+$/, '') + path
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
 
 
 export async function checkOllama(signal) {
   try {
+<<<<<<< HEAD
+    const res = await fetch(api('/health'), {
+      signal,
+    })
+=======
     const res = await fetch(api('/health'), { signal })
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
 
     if (!res.ok) return 'offline'
 
     const data = await res.json()
 
+<<<<<<< HEAD
+    return data.ok ? 'online' : 'offline'
+=======
     if (!data.ok) return 'offline'
     if (!data.modelAvailable) return 'no-model'
 
     return 'online'
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
   } catch {
     return 'offline'
   }
@@ -47,6 +61,13 @@ export async function streamChat({
       },
 
       body: JSON.stringify({
+<<<<<<< HEAD
+        model: AI.model,
+
+        options: AI.options,
+
+=======
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
         messages: [
           {
             role: 'system',
@@ -66,6 +87,20 @@ export async function streamChat({
   }
 
   if (!res.ok) {
+<<<<<<< HEAD
+    let detail = ''
+
+    try {
+      const data = await res.json()
+      detail = data.error ?? ''
+    } catch {
+      // ignore
+    }
+
+    if (res.status === 429) {
+      throw new OllamaError(
+        'طلبات كثيرة. حاول بعد قليل.',
+=======
     const detail = await res
       .json()
       .then((data) => data.error)
@@ -74,29 +109,48 @@ export async function streamChat({
     if (res.status === 429) {
       throw new OllamaError(
         'طلبات كثيرة. انتظر قليلًا وحاول مرة أخرى.',
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
         'rate-limit'
       )
     }
 
     throw new OllamaError(
+<<<<<<< HEAD
+      detail || `فشل الطلب (${res.status}).`
+=======
       detail || `فشل الطلب (${res.status}).`,
       'error'
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
     )
   }
 
   if (!res.body) {
+<<<<<<< HEAD
+    throw new OllamaError(
+      'المتصفح لا يدعم Streaming لهذا الطلب.'
+    )
+=======
     throw new OllamaError('لم تصل إجابة من النموذج.')
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
   }
 
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
 
   let buffer = ''
-  let received = false
+  let fullText = ''
 
+  const processLine = (line) => {
+    line = line.trim()
+
+    if (!line) return
+
+<<<<<<< HEAD
+=======
   const handleLine = (line) => {
     if (!line.trim()) return
 
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
     let data
 
     try {
@@ -112,6 +166,15 @@ export async function streamChat({
     const token = data.message?.content
 
     if (token) {
+<<<<<<< HEAD
+      fullText += token
+      onToken?.(token)
+    }
+  }
+
+  while (true) {
+    const { value, done } = await reader.read()
+=======
       received = true
       onToken(token)
     }
@@ -119,6 +182,7 @@ export async function streamChat({
 
   for (;;) {
     const { done, value } = await reader.read()
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
 
     if (done) break
 
@@ -126,17 +190,43 @@ export async function streamChat({
       stream: true,
     })
 
+<<<<<<< HEAD
+    let newlineIndex
+
+    while (
+      (newlineIndex = buffer.indexOf('\n')) !== -1
+    ) {
+      const line = buffer.slice(0, newlineIndex)
+
+      buffer = buffer.slice(newlineIndex + 1)
+
+      processLine(line)
+=======
     const lines = buffer.split('\n')
 
     buffer = lines.pop() ?? ''
 
     for (const line of lines) {
       handleLine(line)
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
     }
   }
 
   buffer += decoder.decode()
 
+<<<<<<< HEAD
+  if (buffer.trim()) {
+    processLine(buffer)
+  }
+
+  if (!fullText.trim()) {
+    throw new OllamaError(
+      'النموذج لم يرجع أي نص.'
+    )
+  }
+
+  return fullText
+=======
   handleLine(buffer)
 
   if (!received) {
@@ -144,6 +234,7 @@ export async function streamChat({
       'لم تصل إجابة من النموذج.'
     )
   }
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
 }
 
 
@@ -153,9 +244,13 @@ export async function rewriteContent({
   eraLabel = '',
   signal,
 }) {
+<<<<<<< HEAD
+  if (!text?.trim()) return text ?? ''
+=======
   if (!text?.trim()) {
     return text ?? ''
   }
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
 
   try {
     const res = await fetch(api('/rewrite'), {
@@ -167,15 +262,26 @@ export async function rewriteContent({
       },
 
       body: JSON.stringify({
+<<<<<<< HEAD
+        model: AI.model,
+
+        options: AI.rewriteOptions,
+
+=======
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
         text,
         regionName,
         eraLabel,
       }),
     })
 
+<<<<<<< HEAD
+    if (!res.ok) return text
+=======
     if (!res.ok) {
       return text
     }
+>>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
 
     const data = await res.json()
 
