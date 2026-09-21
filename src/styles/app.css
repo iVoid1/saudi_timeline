@@ -1091,3 +1091,70 @@ code {
   font-size: 0.7rem;
   line-height: 1.45;
 }
+/* =========================================================
+   Chat — Web Search
+   ========================================================= */
+
+.chat__modebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 7px 14px;
+  border-top: 1px solid var(--line);
+  background: rgba(250, 245, 230, 0.72);
+}
+
+.chat__search-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 5px 12px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  background: transparent;
+  color: var(--muted);
+
+  font-size: 0.84rem;
+  font-weight: 500;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.chat__search-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+
+.chat__search-toggle:hover:not(:disabled) {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.chat__search-toggle:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.chat__search-toggle.is-active {
+  background: rgba(0, 112, 58, 0.1);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.chat__search-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat__search-status {
+  color: var(--muted);
+  font-size: 0.76rem;
+  opacity: 0.8;
+}

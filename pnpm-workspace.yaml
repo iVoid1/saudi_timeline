@@ -1,7 +1,2 @@
-<<<<<<< HEAD
 allowBuilds:
   esbuild: false
-=======
-ignoredBuiltDependencies:
-  - esbuild
->>>>>>> 23d341b91bc37cbfc16ab0dcf8251c3c37f6a0e8
