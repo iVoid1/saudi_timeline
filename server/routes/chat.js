@@ -7,7 +7,10 @@ import {
   webSearchTool,
   executeWebSearchTool,
 } from '../tools/webSearch.js'
-import { buildChatPrompt } from '../prompts/chat.js'
+import {
+  buildChatPrompt,
+  buildSuggestedQuestionsPrompt,
+} from '../prompts/chat.js'
 import {
   cleanModel,
   cleanMessages,
@@ -34,7 +37,137 @@ function getLastUserMessage(messages) {
     .reverse()
     .find((message) => message.role === 'user')
 }
+function parseSuggestedQuestions(text, count) {
+  if (!text) {
+    return []
+  }
 
+  let cleaned = text.trim()
+
+  cleaned = cleaned
+    .replace(/^```(?:json)?/i, '')
+    .replace(/```$/i, '')
+    .trim()
+
+  try {
+    const parsed = JSON.parse(cleaned)
+
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+
+    return parsed
+      .filter(
+        (question) =>
+          typeof question === 'string'
+      )
+      .map((question) => question.trim())
+      .filter(Boolean)
+      .slice(0, count)
+  } catch {
+    return []
+  }
+}
+router.post(
+  '/suggestions',
+  limiter,
+  async (req, res) => {
+    const model = cleanModel(req.body?.model)
+
+    const region =
+      req.body?.region &&
+      typeof req.body.region === 'object'
+        ? req.body.region
+        : null
+
+    /*
+      رقم عشوائي من 3 إلى 6.
+    */
+    const count =
+      Math.floor(Math.random() * 4) + 3
+
+    const controller =
+      new AbortController()
+
+    res.on('close', () => {
+      if (!res.writableEnded) {
+        controller.abort()
+      }
+    })
+
+    try {
+      const response = await ollamaChat({
+        model,
+
+        messages: [
+          {
+            role: 'system',
+
+            content:
+              buildSuggestedQuestionsPrompt({
+                region,
+                count,
+              }),
+          },
+
+          {
+            role: 'user',
+            content:
+              'Generate the suggested questions now.',
+          },
+        ],
+
+        /*
+          مهم:
+          ممنوع البحث أثناء توليد الأسئلة.
+        */
+        tools: [],
+
+        options: {
+          temperature: 0.9,
+          num_predict: 220,
+        },
+
+        stream: false,
+
+        signal: controller.signal,
+      })
+
+      const data = await response.json()
+
+      const questions =
+        parseSuggestedQuestions(
+          data.message?.content ?? '',
+          count
+        )
+
+      if (!questions.length) {
+        throw new Error(
+          'Ollama returned invalid suggested questions.'
+        )
+      }
+
+      res.json({
+        questions,
+      })
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return
+      }
+
+      console.error(
+        'Suggested questions error:',
+        error
+      )
+
+      res.status(500).json({
+        error:
+          error.message ||
+          'Failed to generate suggested questions.',
+      })
+    }
+  }
+)
 router.post('/', limiter, async (req, res) => {
   const model = cleanModel(req.body?.model)
   const messages = cleanMessages(req.body?.messages)

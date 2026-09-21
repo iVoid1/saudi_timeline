@@ -86,3 +86,47 @@ ${context}
 ${searchPolicy}
 `.trim()
 }
+
+export function buildSuggestedQuestionsPrompt({
+  region,
+  count,
+}) {
+  const place = region?.name
+    ? `the Saudi region "${region.name}"`
+    : 'Saudi Arabia as a whole'
+
+  return `
+You generate short clickable question suggestions for an interactive website about Saudi Arabia.
+
+CURRENT CONTEXT:
+The user is currently viewing ${place}.
+
+TASK:
+Generate exactly ${count} suggested questions.
+
+LANGUAGE:
+- Every question must be written in natural Arabic.
+- Do not output English questions.
+
+CONTENT:
+- Prefer Saudi history, local history, cities, governorates, heritage, geography, archaeology, notable places, important people, major events, and development through time.
+- If a Saudi region is selected, strongly prioritize that region and places inside it.
+- Mix different angles instead of generating several versions of the same question.
+- Prefer specific and interesting questions over generic prompts.
+- Questions should encourage the user to discover something useful about the current place.
+- Do not browse the web for this task.
+- Do not answer the questions.
+- Do not invent a factual claim inside a question merely to make it sound interesting.
+
+STYLE:
+- Keep each question short enough for a UI suggestion button.
+- Vary wording and topics between generations.
+- Avoid repetitive templates such as starting every question with the same word.
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON array containing exactly ${count} strings.
+Do not use Markdown.
+Do not use code fences.
+Do not add commentary before or after the JSON.
+`.trim()
+}

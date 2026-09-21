@@ -1158,3 +1158,184 @@ code {
   font-size: 0.76rem;
   opacity: 0.8;
 }
+
+.map-drill-header {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  z-index: 20;
+
+  pointer-events: none;
+}
+
+/* الرجوع: يسار */
+.map-back-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  pointer-events: auto;
+
+  padding: 14px 20px;
+
+  border: 1px solid rgba(70, 60, 40, 0.14);
+  border-radius: 18px;
+
+  background: rgba(255, 251, 239, 0.94);
+
+  box-shadow:
+    0 12px 30px rgba(74, 58, 29, 0.12);
+
+  color: #314f40;
+  font: inherit;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+/* المسار: يمين */
+.map-breadcrumb {
+  position: absolute;
+  right: 0;
+  top: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  pointer-events: auto;
+
+  padding: 14px 20px;
+
+  border: 1px solid rgba(70, 60, 40, 0.14);
+  border-radius: 18px;
+
+  background: rgba(255, 251, 239, 0.94);
+
+  box-shadow:
+    0 12px 30px rgba(74, 58, 29, 0.12);
+
+  color: #6d6250;
+}
+
+.map-breadcrumb button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+
+  color: inherit;
+  font: inherit;
+
+  cursor: pointer;
+}
+
+.map-breadcrumb strong {
+  color: #315443;
+}
+
+.drill-region-background {
+  stroke: none;
+}
+
+.drill-region-outline {
+  fill: none;
+
+  stroke: #725a2b;
+  stroke-width: 3;
+
+  vector-effect: non-scaling-stroke;
+}
+
+.governorate {
+  stroke: #fff9eb;
+  stroke-width: 2.5;
+  cursor: pointer;
+
+  opacity: 0.88;
+
+  transition:
+    opacity 180ms ease,
+    filter 180ms ease,
+    stroke-width 180ms ease,
+    transform 180ms ease;
+}
+
+
+/* مجرد تمرير الماوس */
+.governorate.is-hovered {
+  opacity: 1;
+  filter:
+    brightness(1.1)
+    saturate(1.15);
+
+  stroke-width: 4;
+}
+
+
+/* المحافظة اللي ضغطت عليها */
+.governorate.is-selected {
+  opacity: 1;
+
+  filter:
+    brightness(1.08)
+    saturate(1.45)
+    drop-shadow(0 8px 12px rgba(45, 62, 50, 0.3));
+
+  stroke: #fffdf5;
+  stroke-width: 5;
+}
+
+
+/* باقي المحافظات بعد اختيار واحدة */
+.governorate.is-dim {
+  opacity: 0.48;
+
+  filter:
+    saturate(0.65)
+    brightness(0.96);
+}
+
+
+/* لو مررت على محافظة ثانية وهي dim */
+.governorate.is-dim.is-hovered {
+  opacity: 0.9;
+
+  filter:
+    saturate(1.1)
+    brightness(1.08);
+
+  stroke-width: 4;
+}
+
+
+.governorate-name {
+  fill: #183d2f;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  paint-order: stroke;
+  stroke: rgba(250, 244, 224, 0.82);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+
+  transition:
+    opacity 180ms ease,
+    font-size 180ms ease,
+    font-weight 180ms ease;
+}
+
+.governorate-name.is-hovered {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.governorate-name.is-selected {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.governorate-name.is-dim {
+  opacity: 0.38;
+}

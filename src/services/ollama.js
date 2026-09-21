@@ -201,3 +201,86 @@ export async function rewriteContent({
 
   return data.text || text
 }
+
+export async function getSuggestedQuestions({
+  region,
+  signal,
+}) {
+  const response = await fetch('/api/chat/suggestions', {
+    method: 'POST',
+
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    body: JSON.stringify({
+      model: AI.model,
+
+      region: region
+        ? {
+            id: region.id,
+            name: region.name,
+            nameEn: region.nameEn,
+          }
+        : null,
+    }),
+
+    signal,
+  })
+
+  if (!response.ok) {
+    let message = `HTTP ${response.status}`
+
+    try {
+      const data = await response.json()
+
+      if (data?.error) {
+        message = data.error
+      }
+    } catch {
+      // ignore
+    }
+
+    throw new Error(message)
+  }
+
+  const data = await response.json()
+
+  return Array.isArray(data.questions)
+    ? data.questions
+        .filter(
+          (question) =>
+            typeof question === 'string' &&
+            question.trim()
+        )
+        .map((question) => question.trim())
+    : []
+}
+
+export async function generatePlaceStory({
+  place,
+  baseContent,
+  signal,
+}) {
+  const response = await fetch('/api/rewrite/place', {
+    method: 'POST',
+
+    headers: {
+      'Content-Type': 'application/json',
+    },
+
+    body: JSON.stringify({
+      model: AI.model,
+      place,
+      baseContent,
+    }),
+
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(await readError(response))
+  }
+
+  return response.json()
+}

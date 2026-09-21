@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { AI } from '../config/ai.js'
-import { checkOllama, streamChat } from '../services/ollama.js'
+import {
+  checkOllama,
+  getSuggestedQuestions,
+  streamChat,
+} from '../services/ollama.js'
 
 const STORAGE_KEY = 'saudi-timeline-chat-v1'
 
@@ -127,6 +131,12 @@ export default function OllamaChat({
 
   const [searchEnabled, setSearchEnabled] = useState(false)
 
+  const [suggestedQuestions, setSuggestedQuestions] =
+  useState([])
+
+  const [suggestionsLoading, setSuggestionsLoading] =
+  useState(false)
+
   const listRef = useRef(null)
   const inputRef = useRef(null)
   const abortRef = useRef(null)
@@ -165,6 +175,37 @@ export default function OllamaChat({
 
     return () => controller.abort()
   }, [open])
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    const controller = new AbortController()
+
+    setSuggestedQuestions([])
+    setSuggestionsLoading(true)
+
+    getSuggestedQuestions({
+      region,
+      signal: controller.signal,
+    })
+      .then((questions) => {
+        if (!controller.signal.aborted) {
+          setSuggestedQuestions(questions)
+        }
+      })
+      .catch(() => {
+        // الأسئلة اختيارية، الشات يستمر حتى لو فشل توليدها
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setSuggestionsLoading(false)
+        }
+      })
+
+    return () => controller.abort()
+  }, [open, region?.id])
 
   useEffect(() => {
     if (!open) {
@@ -413,29 +454,57 @@ export default function OllamaChat({
           </p>
 
           {messages.map((message, index) => {
-            const pending =
-              busy &&
-              index === messages.length - 1 &&
-              !message.content
+  const pending =
+    busy &&
+    index === messages.length - 1 &&
+    !message.content
 
-            return (
-              <p
-                className={`msg msg--${message.role}`}
-                key={index}
-              >
-                {pending ? (
-                  <span className="typing">
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                ) : (
-                  message.content
-                )}
-              </p>
-            )
-          })}
-        </div>
+  return (
+    <p
+      className={`msg msg--${message.role}`}
+      key={index}
+    >
+      {pending ? (
+        <span className="typing">
+          <i />
+          <i />
+          <i />
+        </span>
+      ) : (
+        message.content
+      )}
+    </p>
+  )
+})}
+
+{!messages.length && suggestionsLoading && (
+  <div className="chat__quick">
+    <span className="typing">
+      <i />
+      <i />
+      <i />
+    </span>
+  </div>
+)}
+
+{!messages.length &&
+  !suggestionsLoading &&
+  suggestedQuestions.length > 0 && (
+    <div className="chat__quick">
+      {suggestedQuestions.map((question) => (
+        <button
+          key={question}
+          type="button"
+          disabled={busy}
+          onClick={() => send(question)}
+        >
+          {question}
+        </button>
+      ))}
+    </div>
+  )}
+
+</div>
 
         {notice && (
           <p
