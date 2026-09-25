@@ -1339,3 +1339,337 @@ code {
 .governorate-name.is-dim {
   opacity: 0.38;
 }
+/* =========================================================
+   Mobile polish
+   =========================================================
+*/
+@media (max-width: 720px) {
+
+  /* ---------- Explorer ---------- */
+
+  .explorer {
+    overflow: hidden;
+  }
+
+  .explorer__head {
+    margin-bottom: 18px;
+  }
+
+  .explorer__head h2 {
+    font-size: clamp(1.8rem, 9vw, 2.6rem);
+  }
+
+  .explorer__grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  /* ---------- Map ---------- */
+
+  .map-frame {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .map-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+
+  .map-region-view .map-svg {
+    width: calc(100% + 40px);
+    max-width: none;
+    margin-inline: -20px;
+  }
+
+  .map-caption {
+    margin-top: 4px;
+    padding-inline: 10px;
+    text-align: center;
+  }
+
+  /* ---------- Drill navigation ---------- */
+
+  .map-drill-header {
+    position: relative;
+    inset: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    width: 100%;
+    margin-bottom: 8px;
+
+    pointer-events: auto;
+  }
+
+  .map-back-button,
+  .map-breadcrumb {
+    position: static;
+
+    min-height: 38px;
+    padding: 7px 11px;
+
+    border-radius: 10px;
+
+    box-shadow:
+      0 4px 12px rgba(74, 58, 29, 0.08);
+
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .map-back-button {
+    flex: none;
+  }
+
+  .map-breadcrumb {
+    min-width: 0;
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  .map-breadcrumb strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---------- Governorates ---------- */
+
+  .governorate-name {
+    font-size: 20px;
+    stroke-width: 3px;
+  }
+
+  .governorate-name.is-hovered {
+    font-size: 20px;
+  }
+
+  .governorate-name.is-selected {
+    font-size: 22px;
+  }
+
+  .governorate-caption-wrap {
+    margin-top: -8px;
+  }
+
+  /* ---------- Panel ---------- */
+
+  .panel {
+    position: static;
+    width: 100%;
+    padding: 20px 18px;
+    border-radius: 14px;
+  }
+
+  .panel__current {
+    min-height: 0;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+  }
+
+  .panel__swatch {
+    width: 38px;
+    margin-bottom: 10px;
+  }
+
+  .panel__name {
+    font-size: clamp(1.65rem, 8vw, 2rem);
+    line-height: 1.25;
+  }
+
+  .panel__en {
+    margin-top: 3px;
+    font-size: 0.78rem;
+  }
+
+  .panel__text {
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .panel .btn {
+    display: inline-flex;
+    width: auto;
+    max-width: 100%;
+    margin-top: 14px;
+    padding: 9px 14px;
+    font-size: 0.86rem;
+  }
+
+  /* ---------- Region chips ---------- */
+
+  .chips {
+    gap: 6px;
+  }
+
+  .chip {
+    padding: 4px 10px;
+    gap: 6px;
+    font-size: 0.78rem;
+  }
+
+  .chip__dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  /* ---------- Story ---------- */
+
+  .story-section {
+    padding-block: 38px 54px;
+  }
+
+  .story__head {
+    margin-bottom: 28px;
+  }
+
+  .story__name {
+    font-size: clamp(2rem, 11vw, 2.8rem);
+  }
+
+  .story__tagline {
+    padding-inline: 8px;
+    font-size: 0.94rem;
+    line-height: 1.8;
+  }
+
+  /* ---------- Facts ---------- */
+
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .facts__item {
+    padding: 14px 10px;
+  }
+
+  .facts__item dd {
+    font-size: 1.2rem;
+  }
+
+  /* ---------- Timeline ---------- */
+
+  .timeline__rail {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+
+  .rail__step {
+    gap: 7px;
+    padding-inline: 5px;
+  }
+
+  .rail__dot {
+    width: 27px;
+    height: 27px;
+  }
+
+  .rail__label {
+    font-size: 0.82rem;
+  }
+
+  .station {
+    padding-block: 28px;
+  }
+
+  .station__meta {
+    gap: 8px;
+  }
+
+  .station__index {
+    font-size: 1.25rem;
+  }
+
+  .station__meta h3 {
+    font-size: 1.55rem;
+  }
+
+  /* ---------- Floating AI button ---------- */
+
+  .chat-launcher {
+    inset-inline-end: 14px;
+    inset-block-end: 14px;
+
+    width: 48px;
+    height: 48px;
+
+    justify-content: center;
+
+    padding: 0;
+    border-radius: 50%;
+
+    box-shadow:
+      0 7px 20px rgba(13, 59, 40, 0.28);
+  }
+
+  .chat-launcher span {
+    display: none;
+  }
+
+  .chat-launcher svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  /* ---------- Chat ---------- */
+
+  .chat__head {
+    padding:
+      max(14px, env(safe-area-inset-top))
+      14px
+      12px;
+  }
+
+  .chat__list {
+    padding: 14px;
+  }
+
+  .chat__form {
+    padding:
+      10px
+      10px
+      max(10px, env(safe-area-inset-bottom));
+  }
+}
+
+
+/* =========================================================
+   Very small phones
+   =========================================================
+*/
+@media (max-width: 420px) {
+
+  .map-region-view .map-svg {
+    width: calc(100% + 24px);
+    margin-inline: -12px;
+  }
+
+  .map-back-button,
+  .map-breadcrumb {
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  .map-breadcrumb {
+    gap: 4px;
+  }
+
+  .facts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .governorate-name {
+    font-size: 21px;
+  }
+
+  .panel {
+    padding: 18px 15px;
+  }
+}
+
