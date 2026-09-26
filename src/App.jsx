@@ -71,7 +71,7 @@ export default function App() {
             </a>
 
             <a href="#story">
-              {selectedGovernorate?.name ?? region?.name ?? 'المملكة كلها'}
+              {selectedGovernorate?.name ?? region?.name ?? 'المملكة العربية السعودية'}
             </a>
 
             {AI.enabled && (

@@ -25,7 +25,7 @@ export default function RegionPanel({ region, governorate, onSelect, onGovernora
       <li><button type="button" className={`chip${!region ? ' is-active' : ''}`}
         aria-pressed={!region} onClick={() => onSelect(null)}>
         <span className="chip__dot" style={{ background: COUNTRY.color }} aria-hidden="true" />
-        المملكة كلها
+        المملكة العربية السعودية
       </button></li>
       {REGIONS.map((item) => <li key={item.id}>
         <button type="button" className={`chip${region?.id === item.id ? ' is-active' : ''}`}
