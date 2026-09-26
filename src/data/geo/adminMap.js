@@ -5,7 +5,7 @@ export const REGION_RANGES = {
   qassim:   [11, 23],
   hail:     [24, 32],
   northern: [33, 36],
-  jouf:     [37, 40],
+  jawf:     [37, 40],
   tabuk:    [41, 47],
   riyadh:   [48, 70],
   najran:   [71, 77],

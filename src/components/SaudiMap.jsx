@@ -1,636 +1,241 @@
-import { useMemo, useState } from 'react'
-import { geoMercator, geoPath } from 'd3-geo'
-
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { REGIONS, COUNTRY_OUTLINE } from '../data/regions.js'
-
-import {
-  getGovernoratesForRegion,
-  getGovernorateArabicName,
-} from '../data/geo/adminMap.js'
-
+import { getGovernoratesForRegion, getGovernorateArabicName } from '../data/geo/adminMap.js'
 import adm2Data from '../data/geo/saudi-adm2.json'
+import {
+  COUNTRY_VIEW, project, toPath, fixFeatureWinding, mapPath,
+  projectedPolygons, boundsOf, fitViewBox, screenPoint, interiorAnchor, layoutLabels,
+} from './map/geometry.js'
+import useMapCamera from './map/useMapCamera.js'
+import '../styles/map.css'
 
-// ==========================================
-// الخريطة الأصلية
-// ==========================================
-
-const VIEW_W = 1000
-const VIEW_H = 820
-
-const LON0 = 34.3
-const LAT0 = 32.5
-const SCALE = 48.5
-const LAT_FACTOR = 0.913
-
-const project = ([lon, lat]) => [
-  (lon - LON0) * LAT_FACTOR * SCALE,
-  (LAT0 - lat) * SCALE,
-]
-
-const toPath = (coords) =>
-  coords
-    .map(project)
-    .map(
-      ([x, y], i) =>
-        `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`
-    )
-    .join(' ') + ' Z'
-
-function regionToFeature(region) {
-  return {
-    type: 'Feature',
-    properties: {
-      id: region.id,
-      name: region.name,
-    },
-    geometry: {
-      type: 'Polygon',
-      coordinates: [
-        region.coords.map(([lon, lat]) => [lon, lat]),
-      ],
-    },
-  }
-}
-
-function fixFeatureWinding(feature) {
-  const geometry = feature.geometry
-
-  if (geometry.type === 'Polygon') {
-    return {
-      ...feature,
-      geometry: {
-        ...geometry,
-        coordinates: geometry.coordinates.map(
-          (ring) => [...ring].reverse()
-        ),
-      },
-    }
-  }
-
-  if (geometry.type === 'MultiPolygon') {
-    return {
-      ...feature,
-      geometry: {
-        ...geometry,
-        coordinates: geometry.coordinates.map(
-          (polygon) =>
-            polygon.map(
-              (ring) => [...ring].reverse()
-            )
-        ),
-      },
-    }
-  }
-
-  return feature
-}
-
-const GOVERNORATE_COLORS = [
-  '#7FA58E',
-  '#D2B98D',
-  '#9BB7A4',
-  '#C8A982',
-  '#729A84',
-  '#D8C59D',
-  '#8FAF9A',
-  '#BDA77F',
-  '#6F967F',
-  '#CDB68F',
-  '#A3BDAA',
-  '#BFA47D',
-  '#86A994',
-  '#D5BE94',
-  '#769E88',
-]
-
-function centroid(coords) {
-  let x = 0
-  let y = 0
-
-  for (const point of coords) {
-    x += point[0]
-    y += point[1]
-  }
-
-  return [
-    x / coords.length,
-    y / coords.length,
-  ]
-}
-
+const COLORS = ['#7FA58E', '#D2B98D', '#9BB7A4', '#C8A982', '#729A84', '#D8C59D', '#8FAF9A', '#BDA77F', '#6F967F', '#CDB68F', '#A3BDAA', '#BFA47D', '#86A994', '#D5BE94', '#769E88']
 const LABEL_AT = {
-  eastern: [49.6, 23.4],
-  riyadh: [45.7, 23.0],
-  makkah: [41.2, 21.2],
-  madinah: [39.9, 25.2],
-  tabuk: [37.9, 28.1],
-  northern: [41.6, 30.2],
-  najran: [45.9, 18.5],
-  asir: [42.8, 18.5],
-  hail: [41.9, 28.0],
+  eastern: [49.6, 23.4], riyadh: [45.7, 23], makkah: [41.2, 21.2],
+  madinah: [39.9, 25.2], tabuk: [37.9, 28.1], northern: [41.6, 30.2],
+  najran: [45.9, 18.5], asir: [42.8, 18.5], hail: [41.9, 28],
+}
+const regions = REGIONS.map((region) => {
+  const polygon = region.coords.map(project)
+  const bounds = boundsOf(polygon)
+  return {
+    ...region, d: toPath(region.coords), bounds,
+    anchor: LABEL_AT[region.id] || region.labelAt
+      ? project(LABEL_AT[region.id] ?? region.labelAt)
+      : interiorAnchor([[polygon]]),
+    area: (bounds[1][0] - bounds[0][0]) * (bounds[1][1] - bounds[0][1]),
+  }
+})
+const outline = toPath(COUNTRY_OUTLINE)
+const detailCache = new Map()
+
+function getRegionMap(id) {
+  if (!id) return null
+  if (detailCache.has(id)) return detailCache.get(id)
+  const region = regions.find((item) => item.id === id)
+  if (!region) return null
+  const shapes = getGovernoratesForRegion(adm2Data, id).map(fixFeatureWinding).map((feature, index) => ({
+    id: feature.properties.shapeID,
+    name: getGovernorateArabicName(feature),
+    color: COLORS[index % COLORS.length],
+    d: mapPath(feature),
+    anchor: interiorAnchor(projectedPolygons(feature)),
+    area: mapPath.area(feature),
+    bounds: mapPath.bounds(feature),
+  }))
+  // Level 1 is deliberately simplified. Include actual ADM2 bounds so coastlines
+  // and islands cannot be clipped when the detail replaces the selected region.
+  const bounds = boundsOf([region.bounds, ...shapes.map((shape) => shape.bounds)].flat())
+  const data = { region, shapes, bounds }
+  detailCache.set(id, data)
+  return data
 }
 
-const NO_LABEL = new Set([
-  'bahah',
-  'jazan',
-])
-
-// ==========================================
-// Component
-// ==========================================
-
-export default function SaudiMap({
-  selectedId,
-  onSelect,
-
-  selectedGovernorate,
-  onGovernorateSelect,
-
-  onBackToCountry,
-}) {
-  const [hoveredId, setHovered] =
-    useState(null)
-
-  const [activeRegionId, setActiveRegionId] =
-    useState(null)
-
-
-  // ========================================
-  // المملكة - نفس نظامك القديم
-  // ========================================
-
-  const shapes = useMemo(
-    () =>
-      REGIONS.map((region) => ({
-        ...region,
-
-        d: toPath(region.coords),
-
-        label: project(
-          LABEL_AT[region.id] ??
-            region.labelAt ??
-            centroid(region.coords)
-        ),
-      })),
-    []
-  )
-
-  const outline = useMemo(
-    () => toPath(COUNTRY_OUTLINE),
-    []
-  )
-
-  // ========================================
-  // المنطقة المختارة
-  // ========================================
-
-  const activeRegion = useMemo(
-    () =>
-      REGIONS.find(
-        (region) =>
-          region.id === activeRegionId
-      ),
-    [activeRegionId]
-  )
-
-  const governorates = useMemo(
-    () =>
-      activeRegionId
-        ? getGovernoratesForRegion(
-            adm2Data,
-            activeRegionId
-          ).map(fixFeatureWinding)
-        : [],
-    [activeRegionId]
-  )
-
-  // ========================================
-  // d3 يستخدم فقط داخل المنطقة
-  // ========================================
-
-  const regionFeature = useMemo(() => {
-    if (!activeRegion) return null
-
-    return regionToFeature(activeRegion)
-  }, [activeRegion])
-
-  const governorateProjection = useMemo(() => {
-    if (!governorates.length) return null
-
-    const governoratesCollection = {
-      type: 'FeatureCollection',
-      features: governorates,
+function useViewport(ref) {
+  const [viewport, setViewport] = useState({ width: 640, height: 525, font: 'Tajawal, sans-serif', revision: 0 })
+  useLayoutEffect(() => {
+    const element = ref.current
+    let active = true
+    const measure = () => {
+      if (!active) return
+      const { width, height } = element.getBoundingClientRect()
+      if (!width || !height) return
+      setViewport((previous) => ({ width, height, font: getComputedStyle(element).fontFamily, revision: previous.revision + 1 }))
     }
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    measure()
+    document.fonts?.ready.then(measure)
+    document.fonts?.addEventListener('loadingdone', measure)
+    return () => { active = false; observer.disconnect(); document.fonts?.removeEventListener('loadingdone', measure) }
+  }, [ref])
+  return viewport
+}
 
-    return geoMercator().fitExtent(
-      [
-        [80, 80],
-        [VIEW_W - 80, VIEW_H - 80],
-      ],
-      governoratesCollection
-    )
-  }, [governorates])
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReduced(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+  return reduced
+}
 
-  const governoratePath = useMemo(
-    () =>
-      governorateProjection
-        ? geoPath(governorateProjection)
-        : null,
-    [governorateProjection]
-  )
+export default function SaudiMap({ selectedId, onSelect, selectedGovernorate, onGovernorateSelect, onBackToCountry }) {
+  const [hoveredId, setHovered] = useState(null)
+  const stageRef = useRef(null)
+  const targetRefs = useRef(new Map())
+  const focusAfterTransition = useRef(null)
+  const backRef = useRef(null)
+  const viewport = useViewport(stageRef)
+  const reducedMotion = useReducedMotion()
+  const selectedMap = useMemo(() => getRegionMap(selectedId), [selectedId])
+  const targetBox = useMemo(() => selectedMap
+    ? fitViewBox(selectedMap.bounds, viewport.width / viewport.height)
+    : COUNTRY_VIEW, [selectedMap, viewport.width, viewport.height])
+  const camera = useMapCamera(selectedMap?.region.id ?? null, targetBox, reducedMotion)
+  const displayedMap = useMemo(() => getRegionMap(camera.detailId), [camera.detailId])
+  const ready = !camera.moving && camera.detailId === (selectedMap?.region.id ?? null)
+  const items = selectedMap ? selectedMap.shapes : regions
+  const activeId = selectedGovernorate?.id ?? selectedId
 
-  // ========================================
-  // Actions
-  // ========================================
+  const labels = useMemo(() => {
+    const context = document.createElement('canvas').getContext('2d')
+    const measure = (text, size) => {
+      if (!context) return text.length * size
+      context.font = `700 ${size}px ${viewport.font}`
+      return context.measureText(text).width
+    }
+    return layoutLabels(items.map((item) => ({ ...item,
+      anchor: screenPoint(item.anchor, targetBox, viewport.width, viewport.height),
+    })), viewport.width, viewport.height, measure)
+  }, [items, targetBox, viewport])
 
-  function openRegion(id) {
-    onSelect?.(id)
+  useEffect(() => { setHovered(null) }, [selectedId])
+  useEffect(() => {
+    if (!ready || !focusAfterTransition.current) return
+    const id = focusAfterTransition.current
+    focusAfterTransition.current = null
+    const target = id === 'detail' ? backRef.current : targetRefs.current.get(id)
+    target?.focus({ preventScroll: true })
+  }, [ready])
 
-    setActiveRegionId(id)
-
-    onGovernorateSelect?.(null)
-
+  function select(item, keyboard = false) {
+    if (!ready) return
     setHovered(null)
+    if (selectedMap) {
+      onGovernorateSelect({ id: item.id, name: item.name, regionId: selectedId, regionName: selectedMap.region.name })
+    } else {
+      if (keyboard) focusAfterTransition.current = 'detail'
+      onSelect(item.id)
+    }
   }
 
-  function goBack() {
-    setActiveRegionId(null)
-
-    onGovernorateSelect?.(null)
-
-    onBackToCountry?.()
-
+  function back() {
     setHovered(null)
+    if (selectedGovernorate) {
+      onGovernorateSelect(null)
+    } else if (selectedId) {
+      focusAfterTransition.current = selectedId
+      onBackToCountry()
+    }
   }
 
-  // ========================================
-  // LEVEL 1
-  // المملكة
-  // ========================================
-
-  if (!activeRegionId) {
-    const active =
-      hoveredId ?? selectedId
-
-    const activeName =
-      REGIONS.find(
-        (region) =>
-          region.id === active
-      )?.name
-
-    return (
-      <div className="map-frame">
-        <svg
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          className="map-svg"
-          role="group"
-          aria-label="خريطة مناطق المملكة العربية السعودية"
-        >
-          <defs>
-            <filter
-              id="pick"
-              x="-30%"
-              y="-30%"
-              width="160%"
-              height="160%"
-            >
-              <feDropShadow
-                dx="0"
-                dy="5"
-                stdDeviation="7"
-                floodOpacity="0.25"
-              />
-            </filter>
-          </defs>
-
-          <g className="regions">
-            {shapes.map((region) => {
-              const isSelected =
-                selectedId === region.id
-
-              const isHovered =
-                hoveredId === region.id
-
-              const isDim =
-                active &&
-                active !== region.id
-
-              return (
-                <path
-                  key={region.id}
-                  d={region.d}
-                  fill={region.color}
-                  className={[
-                    'region',
-                    isSelected &&
-                      'is-selected',
-                    isHovered &&
-                      'is-hovered',
-                    isDim &&
-                      'is-dim',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  filter={
-                    isSelected ||
-                    isHovered
-                      ? 'url(#pick)'
-                      : undefined
-                  }
-                  tabIndex={0}
-                  role="button"
-                  aria-label={region.name}
-                  onMouseEnter={() =>
-                    setHovered(region.id)
-                  }
-                  onMouseLeave={() =>
-                    setHovered(null)
-                  }
-                  onFocus={() =>
-                    setHovered(region.id)
-                  }
-                  onBlur={() =>
-                    setHovered(null)
-                  }
-                  onClick={() =>
-                    openRegion(region.id)
-                  }
-                  onKeyDown={(event) => {
-                    if (
-                      event.key ===
-                        'Enter' ||
-                      event.key === ' '
-                    ) {
-                      event.preventDefault()
-
-                      openRegion(
-                        region.id
-                      )
-                    }
-                  }}
-                />
-              )
-            })}
-          </g>
-
-          <g
-            className="region-labels"
-            aria-hidden="true"
-          >
-            {shapes
-              .filter(
-                (region) =>
-                  !NO_LABEL.has(
-                    region.id
-                  )
-              )
-              .map((region) => (
-                <text
-                  key={region.id}
-                  x={region.label[0]}
-                  y={region.label[1]}
-                  className={
-                    selectedId ===
-                    region.id
-                      ? 'is-selected'
-                      : undefined
-                  }
-                >
-                  {region.name}
-                </text>
-              ))}
-          </g>
-
-          <path
-            d={outline}
-            className="country-outline"
-          />
-        </svg>
-
-        <p
-          className="map-caption"
-          aria-live="polite"
-        >
-          {activeName ??
-            'مرّر على الخريطة، واضغط على منطقة لتفتح حكايتها'}
-        </p>
-      </div>
-    )
-  }
-
-  // ========================================
-  // LEVEL 2
-  // محافظات المنطقة
-  // ========================================
-
-  return (
-    <div className="map-frame map-region-view">
-
-      <div className="map-drill-header">
-        <button
-          type="button"
-          className="map-back-button"
-          onClick={goBack}
-        >
-          ← رجوع للمملكة
-        </button>
-
-        <div className="map-breadcrumb">
-          <button
-            type="button"
-            onClick={goBack}
-          >
-            المملكة
-          </button>
-
-          <span>‹</span>
-
-          <strong>
-            {activeRegion?.name}
-          </strong>
-        </div>
-      </div>
-
-      <svg
-        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-        className="map-svg governorates-map"
-        role="group"
-        aria-label={`محافظات ${activeRegion?.name}`}
-      >
-        <defs>
-          <filter
-            id="govPick"
-            x="-30%"
-            y="-30%"
-            width="160%"
-            height="160%"
-          >
-            <feDropShadow
-              dx="0"
-              dy="6"
-              stdDeviation="8"
-              floodOpacity="0.28"
-            />
-          </filter>
-        </defs>
-
-        <g className="governorates">
-          {governorates.map((feature, index) => {
-            const id = feature.properties.shapeID
-
-            const name =
-              getGovernorateArabicName(feature)
-
-            const isHovered =
-              hoveredId === id
-
-            const isSelected =
-              selectedGovernorate?.id === id
-
-            const isDim =
-              selectedGovernorate &&
-              !isSelected
-
-            const center =
-              governoratePath.centroid(feature)
-
-            return (
-              <g key={id}>
-                <path
-  d={governoratePath(feature)}
-  style={{
-    fill:
-      GOVERNORATE_COLORS[
-        index % GOVERNORATE_COLORS.length
-      ],
-
-    opacity:
-      isSelected
-        ? 1
-        : isHovered
-          ? 1
-          : isDim
-            ? 0.38
-            : 0.92,
-
-    filter:
-      isSelected
-        ? 'brightness(1.12) saturate(1.3) drop-shadow(0 7px 8px rgba(35, 65, 50, 0.25))'
-        : isHovered
-          ? 'brightness(1.1) saturate(1.15) drop-shadow(0 5px 6px rgba(35, 65, 50, 0.20))'
-          : isDim
-            ? 'saturate(0.55)'
-            : 'drop-shadow(0 1px 1px rgba(35, 65, 50, 0.08))',
-
-    stroke:
-      isSelected
-        ? '#fffdf5'
-        : isHovered
-          ? '#fffaf0'
-          : '#fff9eb',
-
-    strokeWidth:
-      isSelected
-        ? 5
-        : isHovered
-          ? 3.8
-          : 2.5,
-
-    cursor: 'pointer',
-
-    transition:
-      'opacity 180ms ease, filter 180ms ease, stroke-width 180ms ease',
-  }}
-
-  className={[
-    'governorate',
-    isHovered && 'is-hovered',
-    isSelected && 'is-selected',
-    isDim && 'is-dim',
-  ]
-    .filter(Boolean)
-    .join(' ')}
-
-  tabIndex={0}
-  role="button"
-  aria-label={name}
-
-  onMouseEnter={() => setHovered(id)}
-  onMouseLeave={() => setHovered(null)}
-
-  onFocus={() => setHovered(id)}
-  onBlur={() => setHovered(null)}
-
-  onClick={() =>
-    onGovernorateSelect?.({
-      id,
-      name,
-      regionId: activeRegionId,
-      regionName: activeRegion?.name,
-    })
-  }
-
-  onKeyDown={(event) => {
-    if (
-      event.key === 'Enter' ||
-      event.key === ' '
-    ) {
+  function onKeyDown(event, item) {
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      onGovernorateSelect?.({
-        id,
-        name,
-        regionId: activeRegionId,
-        regionName: activeRegion?.name,
-      })
+      select(item, true)
+      return
     }
-  }}
-/>
+    const directions = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }
+    let next
+    if (event.key === 'Home') next = items[0]
+    else if (event.key === 'End') next = items.at(-1)
+    else if (directions[event.key]) {
+      const [dx, dy] = directions[event.key]
+      next = items.filter((candidate) => candidate.id !== item.id).map((candidate) => {
+        const x = candidate.anchor[0] - item.anchor[0], y = candidate.anchor[1] - item.anchor[1]
+        return { candidate, forward: x * dx + y * dy, distance: Math.hypot(x, y) + Math.abs(x * dy - y * dx) }
+      }).filter(({ forward }) => forward > 0).sort((a, b) => a.distance - b.distance)[0]?.candidate
+    } else return
+    event.preventDefault()
+    if (next) targetRefs.current.get(next.id)?.focus({ preventScroll: true })
+  }
 
-                <text
-  x={center[0]}
-  y={center[1]}
-  className={[
-    'governorate-name',
-    isHovered && 'is-hovered',
-    isSelected && 'is-selected',
-    isDim && 'is-dim',
-  ]
-    .filter(Boolean)
-    .join(' ')}
-  pointerEvents="none"
-  textAnchor="middle"
-  dominantBaseline="middle"
->
-  {name}
-</text>
-              </g>
-            )
-          })}
-        </g>
-      </svg>
+  function shape(item, detail) {
+    const interactive = ready && Boolean(selectedMap) === detail
+    return <path
+      key={item.id}
+      ref={(node) => { if (node) targetRefs.current.set(item.id, node); else targetRefs.current.delete(item.id) }}
+      d={item.d} fill={item.color}
+      className={`map-shape ${detail ? 'governorate' : 'region'}${activeId === item.id ? ' is-selected' : ''}${hoveredId === item.id ? ' is-hovered' : ''}`}
+      tabIndex={interactive ? 0 : -1} role="button" aria-label={item.name}
+      aria-pressed={activeId === item.id} aria-disabled={!interactive}
+      onPointerEnter={(event) => { if (event.pointerType !== 'touch') setHovered(item.id) }}
+      onPointerLeave={() => setHovered(null)}
+      onFocus={() => setHovered(item.id)} onBlur={() => setHovered(null)}
+      onClick={() => select(item)} onKeyDown={(event) => onKeyDown(event, item)}
+    />
+  }
 
-    <div className="governorate-caption-wrap">
-      <div
-          className={[
-            'governorate-caption',
-            selectedGovernorate && 'is-active',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          aria-live="polite"
-        >
-          {hoveredId
-            ? getGovernorateArabicName(
-                governorates.find(
-                  (feature) =>
-                    feature.properties.shapeID ===
-                    hoveredId
-                )
-              )
-            : selectedGovernorate?.name ??
-              `اختر محافظة من ${activeRegion?.name}`}
-        </div>
-      </div>
+  const currentName = selectedGovernorate?.name ?? selectedMap?.region.name ?? 'المملكة العربية السعودية'
+  const hoveredName = items.find((item) => item.id === hoveredId)?.name
+
+  return <div className={`map-frame${selectedMap ? ' map-region-view' : ''}`}
+    onKeyDown={(event) => { if (event.key === 'Escape' && selectedId) { event.preventDefault(); back() } }}>
+    <div className="map-drill-header">
+      <nav className="map-breadcrumb" aria-label="المكان الحالي">
+        <button type="button" onClick={onBackToCountry} aria-current={!selectedId ? 'location' : undefined}>المملكة</button>
+        {selectedMap && <><span aria-hidden="true">‹</span>
+          <button type="button" onClick={() => onGovernorateSelect(null)} aria-current={!selectedGovernorate ? 'location' : undefined}>{selectedMap.region.name}</button>
+        </>}
+        {selectedGovernorate && <><span aria-hidden="true">‹</span><strong aria-current="location">{selectedGovernorate.name}</strong></>}
+      </nav>
+      {selectedId && <button ref={backRef} type="button" className="map-back-button" onClick={back}>
+        {selectedGovernorate ? `العودة إلى ${selectedMap?.region.name}` : 'العودة إلى المملكة'}
+      </button>}
     </div>
-  )
+    <div className="map-stage" ref={stageRef} aria-busy={!ready}>
+      <svg viewBox={camera.box.join(' ')} className="map-svg" role="group"
+        aria-label={selectedMap ? `محافظات ${selectedMap.region.name}` : 'خريطة مناطق المملكة العربية السعودية'}>
+        <g opacity={1 - camera.opacity} aria-hidden={Boolean(selectedMap) || !ready}
+          className={ready && !selectedMap ? undefined : 'map-layer--inactive'}>
+          {regions.map((item) => shape(item, false))}
+          <path d={outline} className="country-outline" />
+        </g>
+        {displayedMap && <g opacity={camera.opacity} aria-hidden={!ready}
+          className={ready ? undefined : 'map-layer--inactive'}>
+          {displayedMap.shapes.map((item) => shape(item, true))}
+        </g>}
+      </svg>
+      <svg className={`map-labels${ready ? '' : ' map-labels--hidden'}`} viewBox={`0 0 ${viewport.width} ${viewport.height}`} aria-hidden="true">
+        {labels.filter((label) => label.moved).map((label) => <g key={label.id} className="map-leader">
+          <line x1={label.anchor[0]} y1={label.anchor[1]} x2={label.x} y2={label.y} />
+          <circle cx={label.anchor[0]} cy={label.anchor[1]} r="2" />
+        </g>)}
+        {labels.map((label) => <g key={label.id}
+          className={`map-label${label.moved ? ' is-displaced' : ''}${activeId === label.id ? ' is-selected' : ''}${hoveredId === label.id ? ' is-hovered' : ''}`}
+          onClick={() => select(label)}
+          onPointerEnter={(event) => { if (event.pointerType !== 'touch') setHovered(label.id) }}
+          onPointerLeave={() => setHovered(null)}>
+          <rect x={label.x - label.width / 2} y={label.y - label.height / 2} width={label.width} height={label.height} rx="5" />
+          <text x={label.x} y={label.y} fontSize={label.fontSize}>{label.name}</text>
+        </g>)}
+      </svg>
+    </div>
+    <p className="map-caption" aria-live="polite" aria-atomic="true">{hoveredName ?? currentName}</p>
+    {selectedMap && (selectedMap.shapes.length ? <label className="map-place-select">
+      <span>المحافظة</span>
+      <select value={selectedGovernorate?.id ?? ''} onChange={(event) => {
+        const item = selectedMap.shapes.find((candidate) => candidate.id === event.target.value)
+        if (item) onGovernorateSelect({ id: item.id, name: item.name, regionId: selectedId, regionName: selectedMap.region.name })
+        else onGovernorateSelect(null)
+      }}>
+        <option value="">المنطقة كلها</option>
+        {selectedMap.shapes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+      </select>
+    </label> : <p className="map-caption">لا تتوفر تفاصيل المحافظات لهذه المنطقة.</p>)}
+  </div>
 }

@@ -1,0 +1,218 @@
+/* Map geometry zooms through the SVG viewBox. Labels use a separate pixel space. */
+.map-frame {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.map-stage {
+  position: relative;
+  width: 100%;
+  min-height: 340px;
+  aspect-ratio: 1000 / 820;
+  overflow: hidden;
+  isolation: isolate;
+  touch-action: pan-y pinch-zoom;
+}
+
+.map-svg,
+.map-labels {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.map-layer--inactive,
+.map-labels {
+  pointer-events: none;
+}
+
+.map-shape {
+  stroke: var(--paper);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+  transition: filter 160ms ease, stroke 160ms ease;
+}
+
+.map-shape.is-hovered {
+  filter: brightness(1.08) saturate(1.12);
+  stroke: var(--palm);
+  stroke-width: 2;
+}
+
+.map-shape.is-selected {
+  stroke: var(--green);
+  stroke-width: 2.8;
+  filter: saturate(1.3);
+}
+
+.map-shape:focus-visible {
+  outline: none;
+  stroke: var(--palm);
+  stroke-width: 3.5;
+  filter: brightness(1.1);
+}
+
+.country-outline {
+  fill: none;
+  stroke: #6b5326;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.map-labels--hidden {
+  visibility: hidden;
+}
+
+.map-label {
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.map-label rect {
+  fill: transparent;
+  stroke: transparent;
+}
+
+.map-label text {
+  font-family: var(--body);
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: #183d2f;
+  paint-order: stroke;
+  stroke: rgba(250, 245, 230, 0.9);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  user-select: none;
+}
+
+.map-label.is-displaced rect {
+  fill: rgba(250, 245, 230, 0.9);
+}
+
+.map-label.is-hovered rect,
+.map-label.is-selected rect {
+  fill: var(--paper);
+  stroke: var(--green);
+  stroke-width: 1;
+}
+
+.map-leader {
+  stroke: var(--palm);
+  stroke-width: 1;
+  fill: var(--palm);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.map-drill-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  min-height: 52px;
+  margin-bottom: 8px;
+}
+
+.map-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.map-breadcrumb button,
+.map-back-button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: var(--paper);
+  color: var(--palm);
+}
+
+.map-breadcrumb button {
+  background: transparent;
+  border-color: transparent;
+}
+
+.map-breadcrumb [aria-current] {
+  color: var(--palm);
+  font-weight: 700;
+}
+
+.map-breadcrumb button:hover,
+.map-back-button:hover {
+  border-color: var(--green);
+}
+
+.map-back-button {
+  font-size: 0.85rem;
+}
+
+.map-caption {
+  min-height: 1.9em;
+  margin: 8px 0;
+  text-align: center;
+  color: var(--palm);
+  font-weight: 500;
+}
+
+.map-place-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--palm);
+  font-size: 0.9rem;
+}
+
+.map-place-select select {
+  min-width: 0;
+  max-width: 75%;
+  min-height: 44px;
+  padding: 6px 12px;
+  font: inherit;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.chip {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.panel__back {
+  display: block;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 4px 0;
+  color: var(--green);
+  border: 0;
+  background: none;
+}
+
+@media (max-width: 720px) {
+  .map-breadcrumb,
+  .map-back-button {
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-shape { transition: none; }
+}

@@ -1,139 +1,39 @@
 import { REGIONS } from '../data/regions.js'
-import {
-  getRegionContent,
-} from '../data/regionsContent.js'
+import { COUNTRY, getRegionContent } from '../data/regionsContent.js'
 
-export default function RegionPanel({
-  region,
-  governorate,
-  onSelect,
-  onGovernorateClear,
-}) {
-  const tagline = region
-    ? getRegionContent(region.id).tagline
-    : ''
+export default function RegionPanel({ region, governorate, onSelect, onGovernorateClear }) {
+  const place = region ?? COUNTRY
+  const tagline = getRegionContent(region?.id).tagline
 
-  return (
-    <aside className="panel">
-      <div
-        className="panel__current"
-        aria-live="polite"
-      >
-        {governorate && region ? (
-          <>
-            <span
-              className="panel__swatch"
-              style={{
-                background: region.color,
-              }}
-              aria-hidden="true"
-            />
-
-            <span className="panel__en">
-              {region.name}
-            </span>
-
-            <h3 className="panel__name">
-              {governorate.name}
-            </h3>
-
-            <p className="panel__text">
-              إحدى محافظات {region.name}.
-              اخترها من الخريطة لاستكشاف
-              تاريخها ومكانها ضمن المنطقة.
-            </p>
-
-            <button
-              type="button"
-              className="btn btn--green"
-              onClick={
-                onGovernorateClear
-              }
-            >
-              العودة إلى {region.name}
-            </button>
-          </>
-        ) : region ? (
-          <>
-            <span
-              className="panel__swatch"
-              style={{
-                background: region.color,
-              }}
-              aria-hidden="true"
-            />
-
-            <h3 className="panel__name">
-              {region.name}
-            </h3>
-
-            <span className="panel__en">
-              {region.nameEn}
-            </span>
-
-            {tagline && (
-              <p className="panel__text">
-                {tagline}
-              </p>
-            )}
-
-            <a
-              className="btn btn--green"
-              href="#story"
-            >
-              اقرأ حكاية المنطقة
-            </a>
-          </>
-        ) : (
-          <>
-            <h3 className="panel__name">
-              اختر منطقة
-            </h3>
-
-            <p className="panel__text">
-              اضغط على الخريطة أو على اسم
-              من القائمة، وتفتح حكايتها تحت
-              الخريطة.
-            </p>
-          </>
-        )}
-      </div>
-
-      <ul
-        className="chips"
-        aria-label="مناطق المملكة"
-      >
-        {REGIONS.map((r) => (
-          <li key={r.id}>
-            <button
-              type="button"
-
-              className={`chip${
-                region?.id === r.id
-                  ? ' is-active'
-                  : ''
-              }`}
-
-              aria-pressed={
-                region?.id === r.id
-              }
-
-              onClick={() =>
-                onSelect(r.id)
-              }
-            >
-              <span
-                className="chip__dot"
-                style={{
-                  background: r.color,
-                }}
-              />
-
-              {r.name}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </aside>
-  )
+  return <aside className="panel">
+    <div className="panel__current" aria-live="polite" aria-atomic="true">
+      <span className="panel__swatch" style={{ background: place.color }} aria-hidden="true" />
+      {governorate && <span className="panel__en">{place.name}</span>}
+      <h3 className="panel__name">{governorate?.name ?? place.name}</h3>
+      {!governorate && <span className="panel__en">{place.nameEn}</span>}
+      <p className="panel__text">{governorate
+        ? `${governorate.name} ضمن ${place.name}. استكشف حكايتها في الخط الزمني.`
+        : tagline}</p>
+      <a className="btn btn--green" href="#story">
+        {governorate ? 'اقرأ حكاية المحافظة' : region ? 'اقرأ حكاية المنطقة' : 'اقرأ حكاية المملكة'}
+      </a>
+      {governorate && <button type="button" className="panel__back" onClick={onGovernorateClear}>
+        العودة إلى {place.name}
+      </button>}
+    </div>
+    <ul className="chips" aria-label="مناطق المملكة">
+      <li><button type="button" className={`chip${!region ? ' is-active' : ''}`}
+        aria-pressed={!region} onClick={() => onSelect(null)}>
+        <span className="chip__dot" style={{ background: COUNTRY.color }} aria-hidden="true" />
+        المملكة كلها
+      </button></li>
+      {REGIONS.map((item) => <li key={item.id}>
+        <button type="button" className={`chip${region?.id === item.id ? ' is-active' : ''}`}
+          aria-pressed={region?.id === item.id} onClick={() => onSelect(item.id)}>
+          <span className="chip__dot" style={{ background: item.color }} aria-hidden="true" />
+          {item.name}
+        </button>
+      </li>)}
+    </ul>
+  </aside>
 }

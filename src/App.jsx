@@ -6,7 +6,7 @@ import PlaceStory from './components/PlaceStory.jsx'
 import OllamaChat from './components/OllamaChat.jsx'
 
 import { REGIONS } from './data/regions.js'
-import { SITE } from './data/regionsContent.js'
+import { COUNTRY, SITE } from './data/regionsContent.js'
 import { AI } from './config/ai.js'
 
 export default function App() {
@@ -36,6 +36,17 @@ export default function App() {
     setSelectedGovernorate(null)
   }
 
+  function selectGovernorate(governorate) {
+    if (!governorate || governorate.regionId === selectedId) {
+      setSelectedGovernorate(governorate)
+    }
+  }
+
+  function goBack() {
+    if (selectedGovernorate) setSelectedGovernorate(null)
+    else clearRegion()
+  }
+
   return (
     <div
       className="site"
@@ -59,11 +70,9 @@ export default function App() {
               الخريطة
             </a>
 
-            {region && (
-              <a href="#story">
-                {region.name}
-              </a>
-            )}
+            <a href="#story">
+              {selectedGovernorate?.name ?? region?.name ?? 'المملكة كلها'}
+            </a>
 
             {AI.enabled && (
               <button
@@ -145,7 +154,7 @@ export default function App() {
               }
 
               onGovernorateSelect={
-                setSelectedGovernorate
+                selectGovernorate
               }
 
               onBackToCountry={
@@ -171,19 +180,19 @@ export default function App() {
           </div>
         </section>
 
-        {region && (
         <section
           className="story-section"
           id="story"
         >
           <PlaceStory
-            regionId={region.id}
+            key={selectedGovernorate?.id ?? region?.id ?? COUNTRY.id}
+            regionId={region?.id ?? null}
+            onBack={goBack}
             governorate={
               selectedGovernorate
             }
           />
         </section>
-      )}
       </main>
 
       <footer className="footer container">

@@ -6,8 +6,10 @@ import {
 } from 'react'
 
 import { REGIONS } from '../data/regions.js'
+import { AI } from '../config/ai.js'
 
 import {
+  COUNTRY,
   ERAS,
   getRegionContent,
 } from '../data/regionsContent.js'
@@ -15,24 +17,6 @@ import {
 import {
   generatePlaceStory,
 } from '../services/ollama.js'
-
-function emptyContent() {
-  return {
-    tagline: '',
-    facts: [],
-
-    eras: Object.fromEntries(
-      ERAS.map(({ key }) => [
-        key,
-        {
-          text: '',
-          highlights: [],
-          image: '',
-        },
-      ])
-    ),
-  }
-}
 
 function normalizeStory(
   story,
@@ -89,6 +73,7 @@ function normalizeStory(
 export default function PlaceStory({
   regionId,
   governorate,
+  onBack,
 }) {
   const [
     activeEra,
@@ -116,11 +101,7 @@ export default function PlaceStory({
   const regionContent =
     useMemo(
       () =>
-        region
-          ? getRegionContent(
-              region.id
-            )
-          : emptyContent(),
+        getRegionContent(region?.id),
 
       [region]
     )
@@ -133,11 +114,7 @@ export default function PlaceStory({
   */
   const baseContent =
     useMemo(() => {
-      if (!region) {
-        return emptyContent()
-      }
-
-      if (!governorate) {
+      if (!region || !governorate) {
         return regionContent
       }
 
@@ -194,7 +171,7 @@ export default function PlaceStory({
   const place =
     useMemo(() => {
       if (!region) {
-        return null
+        return COUNTRY
       }
 
       if (governorate) {
@@ -247,7 +224,8 @@ export default function PlaceStory({
 
     setGeneratedContent(null)
 
-    if (!place) {
+    if (place.type === 'country' || !AI.enabled) {
+      setLoading(false)
       return
     }
 
@@ -293,8 +271,8 @@ export default function PlaceStory({
     return () =>
       controller.abort()
   }, [
-    place?.id,
-    place?.type,
+    place,
+    baseContent,
   ])
 
   const content =
@@ -367,15 +345,11 @@ export default function PlaceStory({
     generatedContent,
   ])
 
-  if (!region || !place) {
-    return null
-  }
-
   const goTo = (key) =>
     stationRefs.current[
       key
     ]?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       block: 'center',
     })
 
@@ -389,7 +363,7 @@ export default function PlaceStory({
           className="story__swatch"
           style={{
             background:
-              region.color,
+              (region ?? COUNTRY).color,
           }}
           aria-hidden="true"
         />
@@ -405,9 +379,9 @@ export default function PlaceStory({
         </h2>
 
         {!governorate &&
-          region.nameEn && (
+          place.nameEn && (
             <span className="story__name-en">
-              {region.nameEn}
+              {place.nameEn}
             </span>
           )}
 
@@ -429,10 +403,11 @@ export default function PlaceStory({
         <a
           className="story__back"
           href="#map"
+          onClick={onBack}
         >
           {governorate
             ? `ارجع إلى ${region.name}`
-            : 'اختر منطقة أخرى'}
+            : region ? 'العودة إلى المملكة' : 'استكشف المناطق'}
         </a>
       </header>
 
