@@ -124,7 +124,7 @@ export function interiorAnchor(polygons) {
   return best
 }
 
-export function boxesOverlap(a, b, gap = 3) {
+export function boxesOverlap(a, b, gap = 15) {
   return Math.abs(a.x - b.x) < (a.width + b.width) / 2 + gap
     && Math.abs(a.y - b.y) < (a.height + b.height) / 2 + gap
 }
@@ -157,12 +157,14 @@ export function layoutLabels(items, width, height, measure) {
     }
     for (const candidate of candidates) {
       if (placed.some((other) => boxesOverlap(candidate, other))) continue
-      const score = Math.hypot(candidate.x - ax, candidate.y - ay)
-      if (!best || score < best.score) best = { ...candidate, score }
+      const displacement = Math.hypot(candidate.x - ax, candidate.y - ay)
+      if (!best || displacement < best.displacement) {
+        best = { ...candidate, displacement }
+      }
     }
     // The native place selector remains available on exceptionally cramped views.
     if (!best) continue
-    best.moved = best.score > 8
+    best.moved = best.displacement > 8
     placed.push(best)
   }
   return placed

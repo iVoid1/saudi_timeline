@@ -12,7 +12,7 @@ import '../styles/map.css'
 const COLORS = ['#7FA58E', '#D2B98D', '#9BB7A4', '#C8A982', '#729A84', '#D8C59D', '#8FAF9A', '#BDA77F', '#6F967F', '#CDB68F', '#A3BDAA', '#BFA47D', '#86A994', '#D5BE94', '#769E88']
 const LABEL_AT = {
   eastern: [49.6, 23.4], riyadh: [45.7, 23], makkah: [41.2, 21.2],
-  madinah: [39.9, 25.2], tabuk: [37.9, 28.1], northern: [41.6, 30.2],
+  madinah: [39.9, 25.2], tabuk: [37.5, 28.3], northern: [42.2, 30.2],
   najran: [45.9, 18.5], asir: [42.8, 18.5], hail: [41.9, 28],
 }
 const regions = REGIONS.map((region) => {
