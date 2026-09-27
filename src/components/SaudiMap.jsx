@@ -85,10 +85,12 @@ function useReducedMotion() {
 
 export default function SaudiMap({ selectedId, onSelect, selectedGovernorate, onGovernorateSelect, onBackToCountry }) {
   const [hoveredId, setHovered] = useState(null)
+  const [governorateMenuOpen, setGovernorateMenuOpen] = useState(false)
   const stageRef = useRef(null)
   const targetRefs = useRef(new Map())
   const focusAfterTransition = useRef(null)
   const backRef = useRef(null)
+  const governorateMenuRef = useRef(null)
   const viewport = useViewport(stageRef)
   const reducedMotion = useReducedMotion()
   const selectedMap = useMemo(() => getRegionMap(selectedId), [selectedId])
@@ -113,7 +115,23 @@ export default function SaudiMap({ selectedId, onSelect, selectedGovernorate, on
     })), viewport.width, viewport.height, measure)
   }, [items, targetBox, viewport])
 
-  useEffect(() => { setHovered(null) }, [selectedId])
+  useEffect(() => {
+    setHovered(null)
+    setGovernorateMenuOpen(false)
+  }, [selectedId])
+
+  useEffect(() => {
+    if (!governorateMenuOpen) return undefined
+
+    const closeOnOutsidePointer = (event) => {
+      if (!governorateMenuRef.current?.contains(event.target)) {
+        setGovernorateMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer)
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePointer)
+  }, [governorateMenuOpen])
   useEffect(() => {
     if (!ready || !focusAfterTransition.current) return
     const id = focusAfterTransition.current
@@ -184,7 +202,18 @@ export default function SaudiMap({ selectedId, onSelect, selectedGovernorate, on
   const hoveredName = items.find((item) => item.id === hoveredId)?.name
 
   return <div className={`map-frame${selectedMap ? ' map-region-view' : ''}`}
-    onKeyDown={(event) => { if (event.key === 'Escape' && selectedId) { event.preventDefault(); back() } }}>
+    onKeyDown={(event) => {
+      if (event.key !== 'Escape') return
+      if (governorateMenuOpen) {
+        event.preventDefault()
+        setGovernorateMenuOpen(false)
+        return
+      }
+      if (selectedId) {
+        event.preventDefault()
+        back()
+      }
+    }}>
     <div className="map-drill-header">
       <nav className="map-breadcrumb" aria-label="المكان الحالي">
         <button type="button" onClick={onBackToCountry} aria-current={!selectedId ? 'location' : undefined}>المملكة</button>
@@ -226,16 +255,20 @@ export default function SaudiMap({ selectedId, onSelect, selectedGovernorate, on
       </svg>
     </div>
     <p className="map-caption" aria-live="polite" aria-atomic="true">{hoveredName ?? currentName}</p>
-    {selectedMap && (selectedMap.shapes.length ? <label className="map-place-select">
+    {selectedMap && (selectedMap.shapes.length ? <div className="map-place-select">
       <span>المحافظة</span>
-      <select value={selectedGovernorate?.id ?? ''} onChange={(event) => {
-        const item = selectedMap.shapes.find((candidate) => candidate.id === event.target.value)
-        if (item) onGovernorateSelect({ id: item.id, name: item.name, regionId: selectedId, regionName: selectedMap.region.name })
-        else onGovernorateSelect(null)
-      }}>
-        <option value="">المنطقة كلها</option>
-        {selectedMap.shapes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-      </select>
-    </label> : <p className="map-caption">لا تتوفر تفاصيل المحافظات لهذه المنطقة.</p>)}
+      <details ref={governorateMenuRef} open={governorateMenuOpen} onToggle={(event) => setGovernorateMenuOpen(event.currentTarget.open)}>
+        <summary>{selectedGovernorate?.name ?? 'المنطقة كلها'}</summary>
+        <div className="map-place-menu" role="listbox" aria-label="اختر المحافظة">
+          <button type="button" role="option" aria-selected={!selectedGovernorate} onClick={() => { onGovernorateSelect(null); setGovernorateMenuOpen(false) }}>
+            المنطقة كلها
+          </button>
+          {selectedMap.shapes.map((item) => <button key={item.id} type="button" role="option" aria-selected={selectedGovernorate?.id === item.id} onClick={() => {
+            onGovernorateSelect({ id: item.id, name: item.name, regionId: selectedId, regionName: selectedMap.region.name })
+            setGovernorateMenuOpen(false)
+          }}>{item.name}</button>)}
+        </div>
+      </details>
+    </div> : <p className="map-caption">لا تتوفر تفاصيل المحافظات لهذه المنطقة.</p>)}
   </div>
 }
