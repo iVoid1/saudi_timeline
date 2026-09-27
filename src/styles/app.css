@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@400;500;700&display=swap');
 
 /* =========================================================
-   الألوان والخطوط — غيّرها من هنا
+   المتغيرات العامة — الألوان، الخطوط، منحنيات الحركة
+   غيّر القيم من هنا فقط
    ========================================================= */
 :root {
   --sand: #f1e7cb;
@@ -21,15 +22,22 @@
   --topbar-h: 58px;
   --gutter: clamp(18px, 4vw, 40px);
   --measure: 62ch;
+
+  /* منحنيات الحركة المستخدمة في كل الانتقالات بالموقع */
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-soft: cubic-bezier(.22, .61, .36, 1);
 }
 
+/* =========================================================
+   الأساسيات
+   ========================================================= */
 * {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: calc(var(--topbar-h) + 12px);
+  scroll-padding-top: calc(var(--topbar-h) + 2px);
 }
 
 body {
@@ -40,6 +48,7 @@ body {
   font-size: 17px;
   line-height: 1.85;
   -webkit-font-smoothing: antialiased;
+  animation: page-fade-in .6s var(--ease-out) both;
 }
 
 a {
@@ -85,6 +94,11 @@ code {
   padding-inline: var(--gutter);
 }
 
+@keyframes page-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* =========================================================
    الأزرار
    ========================================================= */
@@ -98,11 +112,18 @@ code {
   color: var(--palm);
   font-weight: 700;
   text-decoration: none;
-  transition: background 0.2s ease;
+  transition: background 280ms var(--ease-out), transform 280ms var(--ease-out), box-shadow 280ms var(--ease-out);
+  will-change: transform;
 }
 
 .btn:hover {
   background: #e8d29c;
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0) scale(.97);
+  transition-duration: 110ms;
 }
 
 .btn--green {
@@ -122,8 +143,11 @@ code {
   top: 0;
   z-index: 40;
   height: var(--topbar-h);
-  background: var(--palm);
+  background: color-mix(in srgb, var(--palm) 92%, transparent);
   color: var(--paper);
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+  box-shadow: 0 1px 0 rgba(250, 245, 230, 0.055);
 }
 
 .topbar__inner {
@@ -156,13 +180,21 @@ code {
   color: rgba(250, 245, 230, 0.78);
   text-decoration: none;
   font-size: 0.95rem;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: color 280ms var(--ease-out), background 280ms var(--ease-out), transform 280ms var(--ease-out);
+  will-change: transform;
 }
 
 .topbar__links a:hover,
 .topbar__ask:hover {
   color: var(--paper);
   background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.topbar__links a:active,
+.topbar__ask:active {
+  transform: translateY(0) scale(.97);
+  transition-duration: 110ms;
 }
 
 .topbar__ask {
@@ -171,40 +203,100 @@ code {
 }
 
 /* =========================================================
-   الواجهة (Hero)
+   الواجهة (Hero) — المشهد الافتتاحي
    ========================================================= */
 .hero {
-  background: var(--palm);
-  color: var(--paper);
+  position: relative;
+  min-height: calc(100svh - var(--topbar-h));
+  display: grid;
+  align-items: center;
   overflow: hidden;
+  isolation: isolate;
+  color: var(--paper);
+  background:
+    radial-gradient(circle at 72% 42%, rgba(220, 194, 130, 0.12), transparent 26rem),
+    radial-gradient(circle at 15% 90%, rgba(0, 112, 58, 0.28), transparent 34rem),
+    linear-gradient(145deg, #0b3525 0%, var(--palm) 52%, #082c20 100%);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.32;
+  background-image:
+    linear-gradient(30deg, rgba(250, 245, 230, .035) 12%, transparent 12.5%, transparent 87%, rgba(250, 245, 230, .035) 87.5%),
+    linear-gradient(150deg, rgba(250, 245, 230, .035) 12%, transparent 12.5%, transparent 87%, rgba(250, 245, 230, .035) 87.5%);
+  background-size: 72px 126px;
+  animation: hero-ambient 6s ease-in-out infinite;
+}
+
+@keyframes hero-ambient {
+  0%, 100% { opacity: .28; }
+  50% { opacity: .42; }
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 160px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgba(7, 38, 27, 0.38));
 }
 
 .hero__inner {
+  width: 100%;
+  min-height: calc(100svh - var(--topbar-h));
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .7fr);
   align-items: center;
-  gap: clamp(24px, 6vw, 80px);
-  padding-block: clamp(48px, 10vh, 104px) clamp(56px, 11vh, 116px);
+  gap: clamp(32px, 8vw, 120px);
+  padding-block: clamp(70px, 11vh, 130px) clamp(88px, 14vh, 150px);
 }
 
 .hero__eyebrow {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   color: var(--gold-soft);
+  font-size: .92rem;
+  letter-spacing: .04em;
+  animation: opening-rise .95s .05s both var(--ease-out);
+}
+
+.hero__eyebrow::before {
+  content: '';
+  width: 34px;
+  height: 1px;
+  background: currentColor;
+  opacity: .75;
 }
 
 .hero__title {
   margin: 0.1em 0 0;
+  max-width: 8ch;
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(3rem, 8.5vw, 6.4rem);
-  line-height: 1.25;
+  font-size: clamp(4.2rem, 9.5vw, 8rem);
+  line-height: 1.04;
+  text-wrap: balance;
+  text-shadow: 0 10px 45px rgba(0, 0, 0, .12);
+  animation: opening-rise 1.05s .14s both var(--ease-out);
 }
 
 .hero__subtitle {
-  max-width: 40ch;
-  margin: 1rem 0 0;
-  font-size: 1.1rem;
-  color: rgba(250, 245, 230, 0.78);
+  max-width: 34ch;
+  margin: 1.4rem 0 0;
+  font-size: clamp(1.05rem, 1.7vw, 1.28rem);
+  line-height: 1.9;
+  color: rgba(250, 245, 230, .72);
+  animation: opening-rise 1.05s .24s both var(--ease-out);
 }
 
 .hero__actions {
@@ -212,7 +304,8 @@ code {
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  margin-top: 2rem;
+  margin-top: 2.4rem;
+  animation: opening-rise 1.05s .34s both var(--ease-out);
 }
 
 .hero__note {
@@ -220,45 +313,121 @@ code {
   font-size: 0.95rem;
 }
 
+.hero .btn {
+  min-height: 48px;
+  padding-inline: 28px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .13);
+  transition: transform 320ms var(--ease-out), box-shadow 320ms var(--ease-out), background 320ms var(--ease-out);
+}
+
+.hero .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, .18);
+}
+
 .hero__date {
+  position: relative;
+  justify-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: min(31vw, 410px);
   color: var(--gold-soft);
+  animation: opening-mark 1.25s .05s both var(--ease-out);
+}
+
+.hero__date::before {
+  content: '';
+  position: absolute;
+  width: min(31vw, 410px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(220, 194, 130, .13);
+  border-radius: 50%;
+  box-shadow: 0 0 0 34px rgba(220, 194, 130, .025), 0 0 0 70px rgba(220, 194, 130, .018);
+  animation: date-ring-pulse 4s ease-in-out infinite;
+}
+
+@keyframes date-ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.035); opacity: .8; }
 }
 
 .hero__date strong {
+  position: relative;
+  z-index: 1;
+  margin: 0;
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(7rem, 20vw, 15rem);
+  font-size: clamp(10rem, 23vw, 19rem);
   line-height: 1;
-  color: var(--palm-2);
+  color: rgba(220, 194, 130, .18);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .03);
   user-select: none;
 }
 
 .hero__date span {
-  margin-top: -0.4rem;
+  position: relative;
+  z-index: 1;
+  margin-top: 0.6rem;
+  color: var(--gold-soft);
+  letter-spacing: .08em;
   font-size: 0.95rem;
 }
 
+@keyframes opening-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes opening-mark {
+  from { opacity: 0; transform: scale(.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 /* =========================================================
-   الخريطة
+   الخريطة (قسم الاستكشاف)
    ========================================================= */
 .explorer {
-  padding-block: clamp(40px, 8vh, 80px);
-  scroll-margin-top: var(--topbar-h);
+  position: relative;
+  scroll-margin-top: calc(var(--topbar-h) - 95px);
+  padding-block: clamp(24px, 4vh, 52px) clamp(40px, 8vh, 80px);
+}
+
+.explorer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  inset-inline-start: 50%;
+  width: min(180px, 28vw);
+  height: 1px;
+  transform: translateX(50%);
+  background: linear-gradient(90deg, transparent, var(--gold-soft), transparent);
+  opacity: .75;
 }
 
 .explorer__head {
-  margin-bottom: clamp(20px, 4vh, 36px);
+  margin-bottom: clamp(16px, 2.8vh, 28px);
 }
 
 .explorer__head h2 {
-  margin: 0;
+  position: relative;
+  margin: 0 0 14px;
+  padding-bottom: 10px;
   font-family: var(--display);
   font-size: clamp(1.9rem, 4vw, 2.7rem);
   line-height: 1.4;
   color: var(--palm);
+}
+
+.explorer__head h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  width: 64px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--green), var(--gold-soft));
 }
 
 .explorer__head p {
@@ -283,6 +452,13 @@ code {
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 16px;
+  transition: box-shadow 420ms var(--ease-out), border-color 420ms var(--ease-out), transform 420ms var(--ease-out);
+}
+
+.panel:hover {
+  border-color: color-mix(in srgb, var(--green) 20%, var(--line));
+  box-shadow: 0 18px 44px rgba(13, 59, 40, .08);
+  transform: translateY(-3px);
 }
 
 .panel__current {
@@ -327,6 +503,21 @@ code {
   margin-top: 18px;
 }
 
+.panel__back {
+  display: block;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 4px 0;
+  color: var(--green);
+  border: 0;
+  background: none;
+  transition: color 280ms var(--ease-out);
+}
+
+.panel__back:hover {
+  color: var(--palm-2);
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -345,17 +536,25 @@ code {
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 0.9rem;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background 280ms var(--ease-out), border-color 280ms var(--ease-out), color 280ms var(--ease-out), transform 280ms var(--ease-out);
+  will-change: transform;
 }
 
 .chip:hover {
   border-color: var(--green);
+  transform: translateY(-2px);
+}
+
+.chip:active {
+  transform: translateY(0) scale(.97);
+  transition-duration: 110ms;
 }
 
 .chip.is-active {
   background: var(--green);
   border-color: var(--green);
   color: var(--paper);
+  animation: chip-pop 320ms var(--ease-out);
 }
 
 .chip__dot {
@@ -366,6 +565,12 @@ code {
 
 .chip.is-active .chip__dot {
   background: var(--paper) !important;
+}
+
+@keyframes chip-pop {
+  0% { transform: scale(.9); }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 /* =========================================================
@@ -390,11 +595,25 @@ code {
 }
 
 .story__name {
-  margin: 0;
+  position: relative;
+  margin: 0 0 12px;
+  padding-bottom: 10px;
   font-family: var(--display);
   font-size: clamp(2.4rem, 6.5vw, 3.8rem);
   line-height: 1.3;
   color: var(--palm);
+}
+
+.story__name::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--green), var(--gold-soft));
 }
 
 .story__name-en {
@@ -468,7 +687,7 @@ code {
   border: 0;
   text-align: start;
   color: var(--muted);
-  transition: color 0.25s ease;
+  transition: color 320ms var(--ease-out);
 }
 
 .rail__dot {
@@ -481,7 +700,11 @@ code {
   border-radius: 50%;
   background: var(--sand);
   font-size: 0.82rem;
-  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  transition: background 320ms var(--ease-out), border-color 320ms var(--ease-out), color 320ms var(--ease-out), transform 320ms var(--ease-out);
+}
+
+.rail__step:hover .rail__dot {
+  transform: scale(1.07);
 }
 
 .rail__label {
@@ -507,7 +730,8 @@ code {
   padding-block: clamp(26px, 5vh, 46px);
   border-bottom: 1px solid var(--line);
   opacity: 0.55;
-  transition: opacity 0.4s ease;
+  transform: translateY(5px);
+  transition: opacity 520ms var(--ease-out), transform 520ms var(--ease-out);
   scroll-margin-top: calc(var(--topbar-h) + 60px);
 }
 
@@ -517,6 +741,7 @@ code {
 
 .station.is-active {
   opacity: 1;
+  transform: translateY(0);
 }
 
 .station__meta {
@@ -556,6 +781,14 @@ code {
   width: 100%;
   margin-bottom: 18px;
   border-radius: 8px;
+  transform: translateY(14px) scale(.98);
+  box-shadow: 0 0 0 rgba(13, 59, 40, 0);
+  transition: opacity 420ms var(--ease-out), transform 520ms var(--ease-out), box-shadow 520ms var(--ease-out);
+}
+
+.station.is-active .station__image {
+  transform: translateY(0) scale(1);
+  box-shadow: 0 18px 40px rgba(13, 59, 40, .12);
 }
 
 .station__text {
@@ -627,16 +860,29 @@ code {
   color: var(--paper);
   font-weight: 700;
   box-shadow: 0 10px 28px rgba(13, 59, 40, 0.35);
-  transition: background 0.2s ease;
+  transition: background 280ms var(--ease-out), transform 280ms var(--ease-out), box-shadow 280ms var(--ease-out);
+  animation: launcher-pulse 2.6s ease-in-out infinite;
 }
 
 .chat-launcher:hover {
   background: var(--palm-2);
+  transform: translateY(-3px) scale(1.025);
+  box-shadow: 0 15px 34px rgba(13, 59, 40, .38);
+}
+
+.chat-launcher:active {
+  transform: translateY(0) scale(.97);
+  transition-duration: 110ms;
 }
 
 .chat-launcher svg {
   width: 20px;
   height: 20px;
+}
+
+@keyframes launcher-pulse {
+  0%, 100% { box-shadow: 0 10px 28px rgba(13, 59, 40, .35), 0 0 0 0 rgba(0, 112, 58, .35); }
+  50% { box-shadow: 0 10px 28px rgba(13, 59, 40, .35), 0 0 0 10px rgba(0, 112, 58, 0); }
 }
 
 .chat {
@@ -655,14 +901,15 @@ code {
   box-shadow: 0 24px 60px rgba(13, 30, 20, 0.28);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(14px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+  transform: translateY(18px) scale(.985);
+  transform-origin: bottom right;
+  transition: opacity 300ms var(--ease-out), transform 360ms var(--ease-out), visibility 0s linear 360ms;
 }
 
 .chat.is-open {
   opacity: 1;
   visibility: visible;
-  transform: none;
+  transform: translateY(0) scale(1);
   transition-delay: 0s;
 }
 
@@ -723,7 +970,7 @@ code {
   border: 0;
   border-radius: 50%;
   color: var(--paper);
-  transition: background 0.2s ease;
+  transition: background 280ms var(--ease-out);
 }
 
 .chat__tools button:hover:not(:disabled) {
@@ -806,14 +1053,8 @@ code {
 }
 
 @keyframes blink {
-  0%,
-  80%,
-  100% {
-    opacity: 0.25;
-  }
-  40% {
-    opacity: 1;
-  }
+  0%, 80%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
 }
 
 .chat__quick {
@@ -828,12 +1069,19 @@ code {
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 0.88rem;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 280ms var(--ease-out), background 280ms var(--ease-out), transform 280ms var(--ease-out);
+  will-change: transform;
 }
 
 .chat__quick button:hover {
   border-color: var(--green);
   background: rgba(0, 112, 58, 0.06);
+  transform: translateY(-2px);
+}
+
+.chat__quick button:active {
+  transform: translateY(0) scale(.97);
+  transition-duration: 110ms;
 }
 
 .chat__notice {
@@ -898,8 +1146,83 @@ code {
   height: 18px;
 }
 
+/* حد ذاكرة المحادثة */
+.chat__limit-warning {
+  margin: 0;
+  padding: 6px 18px 0;
+  color: var(--gold);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.chat__memory-note {
+  margin: -5px 16px 10px;
+  color: var(--muted);
+  opacity: 0.68;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
 /* =========================================================
-   الشاشات الصغيرة
+   المحادثة — البحث في الويب
+   ========================================================= */
+.chat__modebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 7px 14px;
+  border-top: 1px solid var(--line);
+  background: rgba(250, 245, 230, 0.72);
+}
+
+.chat__search-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.chat__search-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+
+.chat__search-toggle:hover:not(:disabled) {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.chat__search-toggle:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.chat__search-toggle.is-active {
+  background: rgba(0, 112, 58, 0.1);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.chat__search-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat__search-status {
+  color: var(--muted);
+  font-size: 0.76rem;
+  opacity: 0.8;
+}
+
+/* =========================================================
+   الاستجابة للشاشات المختلفة
    ========================================================= */
 @media (max-width: 900px) {
   .explorer__grid {
@@ -942,366 +1265,8 @@ code {
     opacity: 1;
     scroll-margin-top: calc(var(--topbar-h) + 90px);
   }
-
 }
 
-@media (max-width: 720px) {
-  .hero__inner {
-    grid-template-columns: 1fr;
-  }
-
-  .hero__date {
-    order: -1;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 14px;
-  }
-
-  .hero__date strong {
-    font-size: 4.5rem;
-  }
-
-  .hero__date span {
-    margin: 0;
-  }
-
-  .topbar__links a:not(:first-child) {
-    display: none;
-  }
-}
-
-@media (max-width: 560px) {
-  .chat {
-    inset: 0;
-    width: 100%;
-    height: 100dvh;
-    border: 0;
-    border-radius: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
-}
-
-/* حد ذاكرة المحادثة */
-.chat__limit-warning {
-  margin: 0;
-  padding: 6px 18px 0;
-  color: var(--gold);
-  font-size: 0.78rem;
-  line-height: 1.55;
-}
-
-.chat__memory-note {
-  margin: -5px 16px 10px;
-  color: var(--muted);
-  opacity: 0.68;
-  font-size: 0.7rem;
-  line-height: 1.45;
-}
-/* =========================================================
-   Chat — Web Search
-   ========================================================= */
-
-.chat__modebar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 42px;
-  padding: 7px 14px;
-  border-top: 1px solid var(--line);
-  background: rgba(250, 245, 230, 0.72);
-}
-
-.chat__search-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-
-  padding: 5px 12px;
-
-  border: 1px solid var(--line);
-  border-radius: 999px;
-
-  background: transparent;
-  color: var(--muted);
-
-  font-size: 0.84rem;
-  font-weight: 500;
-
-  transition:
-    color 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.15s ease;
-}
-
-.chat__search-toggle svg {
-  width: 15px;
-  height: 15px;
-}
-
-.chat__search-toggle:hover:not(:disabled) {
-  border-color: var(--green);
-  color: var(--green);
-}
-
-.chat__search-toggle:active:not(:disabled) {
-  transform: scale(0.96);
-}
-
-.chat__search-toggle.is-active {
-  background: rgba(0, 112, 58, 0.1);
-  border-color: var(--green);
-  color: var(--green);
-}
-
-.chat__search-toggle:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.chat__search-status {
-  color: var(--muted);
-  font-size: 0.76rem;
-  opacity: 0.8;
-}
-
-/* =========================================================
-   Mobile polish
-   =========================================================
-*/
-@media (max-width: 720px) {
-
-  /* ---------- Explorer ---------- */
-
-  .explorer {
-    overflow: hidden;
-  }
-
-  .explorer__head {
-    margin-bottom: 18px;
-  }
-
-  .explorer__head h2 {
-    font-size: clamp(1.8rem, 9vw, 2.6rem);
-  }
-
-  .explorer__grid {
-    grid-template-columns: 1fr;
-    gap: 22px;
-  }
-
-  /* ---------- Panel ---------- */
-
-  .panel {
-    position: static;
-    width: 100%;
-    padding: 20px 18px;
-    border-radius: 14px;
-  }
-
-  .panel__current {
-    min-height: 0;
-    padding-bottom: 18px;
-    margin-bottom: 18px;
-  }
-
-  .panel__swatch {
-    width: 38px;
-    margin-bottom: 10px;
-  }
-
-  .panel__name {
-    font-size: clamp(1.65rem, 8vw, 2rem);
-    line-height: 1.25;
-  }
-
-  .panel__en {
-    margin-top: 3px;
-    font-size: 0.78rem;
-  }
-
-  .panel__text {
-    font-size: 0.9rem;
-    line-height: 1.7;
-  }
-
-  .panel .btn {
-    display: inline-flex;
-    width: auto;
-    max-width: 100%;
-    margin-top: 14px;
-    padding: 9px 14px;
-    font-size: 0.86rem;
-  }
-
-  /* ---------- Region chips ---------- */
-
-  .chips {
-    gap: 6px;
-  }
-
-  .chip {
-    padding: 4px 10px;
-    gap: 6px;
-    font-size: 0.78rem;
-  }
-
-  .chip__dot {
-    width: 7px;
-    height: 7px;
-  }
-
-  /* ---------- Story ---------- */
-
-  .story-section {
-    padding-block: 38px 54px;
-  }
-
-  .story__head {
-    margin-bottom: 28px;
-  }
-
-  .story__name {
-    font-size: clamp(2rem, 11vw, 2.8rem);
-  }
-
-  .story__tagline {
-    padding-inline: 8px;
-    font-size: 0.94rem;
-    line-height: 1.8;
-  }
-
-  /* ---------- Facts ---------- */
-
-  .facts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .facts__item {
-    padding: 14px 10px;
-  }
-
-  .facts__item dd {
-    font-size: 1.2rem;
-  }
-
-  /* ---------- Timeline ---------- */
-
-  .timeline__rail {
-    margin-inline: -16px;
-    padding-inline: 16px;
-  }
-
-  .rail__step {
-    gap: 7px;
-    padding-inline: 5px;
-  }
-
-  .rail__dot {
-    width: 27px;
-    height: 27px;
-  }
-
-  .rail__label {
-    font-size: 0.82rem;
-  }
-
-  .station {
-    padding-block: 28px;
-  }
-
-  .station__meta {
-    gap: 8px;
-  }
-
-  .station__index {
-    font-size: 1.25rem;
-  }
-
-  .station__meta h3 {
-    font-size: 1.55rem;
-  }
-
-  /* ---------- Floating AI button ---------- */
-
-  .chat-launcher {
-    inset-inline-end: 14px;
-    inset-block-end: 14px;
-
-    width: 48px;
-    height: 48px;
-
-    justify-content: center;
-
-    padding: 0;
-    border-radius: 50%;
-
-    box-shadow:
-      0 7px 20px rgba(13, 59, 40, 0.28);
-  }
-
-  .chat-launcher span {
-    display: none;
-  }
-
-  .chat-launcher svg {
-    width: 21px;
-    height: 21px;
-  }
-
-  /* ---------- Chat ---------- */
-
-  .chat__head {
-    padding:
-      max(14px, env(safe-area-inset-top))
-      14px
-      12px;
-  }
-
-  .chat__list {
-    padding: 14px;
-  }
-
-  .chat__form {
-    padding:
-      10px
-      10px
-      max(10px, env(safe-area-inset-bottom));
-  }
-}
-
-
-/* =========================================================
-   Very small phones
-   =========================================================
-*/
-@media (max-width: 420px) {
-
-  .facts {
-    grid-template-columns: 1fr 1fr;
-  }
-
-
-  .panel {
-    padding: 18px 15px;
-  }
-}
-
-/* =========================================================
-   Mobile layout — compact, intentional phone composition
-   ========================================================= */
 @media (max-width: 720px) {
   :root {
     --gutter: clamp(14px, 4.5vw, 20px);
@@ -1312,46 +1277,63 @@ code {
     line-height: 1.75;
   }
 
-  /* Hero */
+  /* ---------- الواجهة (Hero) ---------- */
+  .hero {
+    min-height: calc(100svh - var(--topbar-h));
+  }
+
   .hero__inner {
+    min-height: calc(100svh - var(--topbar-h));
     grid-template-columns: 1fr;
-    gap: 20px;
-    padding-block: 38px 44px;
+    align-content: center;
+    gap: 18px;
+    padding-block: 48px 68px;
   }
 
-  .hero__date {
-    order: -1;
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: flex-start;
-    gap: 10px;
-  }
-
-  .hero__date strong {
-    font-size: clamp(4rem, 22vw, 5.5rem);
-  }
-
-  .hero__date span {
-    margin: 0;
-    font-size: 0.82rem;
+  .hero__eyebrow,
+  .hero__subtitle,
+  .hero__actions {
+    position: relative;
+    z-index: 1;
   }
 
   .hero__title {
-    font-size: clamp(2.6rem, 14vw, 4rem);
+    position: relative;
+    z-index: 1;
+    max-width: 7ch;
+    font-size: clamp(3.5rem, 17vw, 5.5rem);
   }
 
-  .hero__subtitle {
-    margin-top: 0.7rem;
-    font-size: 1rem;
-    line-height: 1.75;
+  .hero__date {
+    position: absolute;
+    inset-inline-end: -20px;
+    top: 5vh;
+    min-width: 0;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
+    opacity: .8;
+    pointer-events: none;
   }
 
-  .hero__actions {
-    gap: 12px;
-    margin-top: 1.35rem;
+  .hero__date::before {
+    display: none;
   }
 
-  /* Explorer */
+  .hero__date strong {
+    font-size: clamp(8rem, 42vw, 12rem);
+    color: rgba(220, 194, 130, .1);
+  }
+
+  .hero__date span {
+    display: none;
+  }
+
+  .topbar__links a:not(:first-child) {
+    display: none;
+  }
+
+  /* ---------- الخريطة والقسم ---------- */
   .explorer {
     padding-block: 34px 44px;
     overflow: visible;
@@ -1370,12 +1352,17 @@ code {
     gap: 22px;
   }
 
-  /* Panel */
+  /* ---------- اللوحة ---------- */
   .panel {
     position: static;
     width: 100%;
     padding: 20px 18px;
     border-radius: 14px;
+  }
+
+  .panel:hover {
+    transform: none;
+    box-shadow: none;
   }
 
   .panel__current {
@@ -1413,6 +1400,7 @@ code {
     font-size: 0.86rem;
   }
 
+  /* ---------- شرائح المناطق ---------- */
   .chips {
     gap: 6px;
   }
@@ -1429,7 +1417,7 @@ code {
     height: 7px;
   }
 
-  /* Story */
+  /* ---------- الحكاية ---------- */
   .story-section {
     padding-block: 32px 46px;
   }
@@ -1452,7 +1440,7 @@ code {
     line-height: 1.75;
   }
 
-  /* Facts: one clean row per fact; no empty 2x2 cell */
+  /* ---------- الحقائق: صف واحد لكل عنصر ---------- */
   .facts {
     grid-template-columns: 1fr;
     gap: 0;
@@ -1487,7 +1475,7 @@ code {
     text-align: end;
   }
 
-  /* Timeline navigation */
+  /* ---------- الخط الزمني ---------- */
   .timeline {
     grid-template-columns: 1fr;
     gap: 0;
@@ -1559,7 +1547,7 @@ code {
     font-size: 0.96rem;
   }
 
-  /* Floating AI button */
+  /* ---------- زر المساعد الذكي العائم ---------- */
   .chat-launcher {
     inset-inline-end: 14px;
     inset-block-end: max(14px, env(safe-area-inset-bottom));
@@ -1580,6 +1568,7 @@ code {
     height: 21px;
   }
 
+  /* ---------- المحادثة ---------- */
   .chat__head {
     padding: max(14px, env(safe-area-inset-top)) 14px 12px;
   }
@@ -1590,6 +1579,16 @@ code {
 
   .chat__form {
     padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 560px) {
+  .chat {
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
   }
 }
 
@@ -1611,3 +1610,20 @@ code {
   }
 }
 
+/* =========================================================
+   تفضيل تقليل الحركة — يوقف كل الرسوم والانتقالات
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
