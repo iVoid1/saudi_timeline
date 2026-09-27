@@ -23,7 +23,6 @@
   --gutter: clamp(18px, 4vw, 40px);
   --measure: 62ch;
 
-  /* منحنيات الحركة المستخدمة في كل الانتقالات بالموقع */
   --ease-out: cubic-bezier(.16, 1, .3, 1);
   --ease-soft: cubic-bezier(.22, .61, .36, 1);
 }
@@ -881,8 +880,17 @@ code {
 }
 
 @keyframes launcher-pulse {
-  0%, 100% { box-shadow: 0 10px 28px rgba(13, 59, 40, .35), 0 0 0 0 rgba(0, 112, 58, .35); }
-  50% { box-shadow: 0 10px 28px rgba(13, 59, 40, .35), 0 0 0 10px rgba(0, 112, 58, 0); }
+  0%, 100% {
+    box-shadow:
+      0 10px 28px rgba(13, 59, 40, .35),
+      0 0 0 0 rgba(0, 112, 58, .35);
+  }
+
+  50% {
+    box-shadow:
+      0 10px 28px rgba(13, 59, 40, .35),
+      0 0 0 10px rgba(0, 112, 58, 0);
+  }
 }
 
 .chat {
@@ -903,7 +911,10 @@ code {
   visibility: hidden;
   transform: translateY(18px) scale(.985);
   transform-origin: bottom right;
-  transition: opacity 300ms var(--ease-out), transform 360ms var(--ease-out), visibility 0s linear 360ms;
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 360ms var(--ease-out),
+    visibility 0s linear 360ms;
 }
 
 .chat.is-open {
@@ -1069,7 +1080,10 @@ code {
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 0.88rem;
-  transition: border-color 280ms var(--ease-out), background 280ms var(--ease-out), transform 280ms var(--ease-out);
+  transition:
+    border-color 280ms var(--ease-out),
+    background 280ms var(--ease-out),
+    transform 280ms var(--ease-out);
   will-change: transform;
 }
 
@@ -1187,7 +1201,11 @@ code {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 500;
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
 }
 
 .chat__search-toggle svg {
@@ -1224,6 +1242,7 @@ code {
 /* =========================================================
    الاستجابة للشاشات المختلفة
    ========================================================= */
+
 @media (max-width: 900px) {
   .explorer__grid {
     grid-template-columns: 1fr;
@@ -1267,9 +1286,23 @@ code {
   }
 }
 
+/* =========================================================
+   الجوال
+   ========================================================= */
+
 @media (max-width: 720px) {
   :root {
+    --topbar-h: 54px;
     --gutter: clamp(14px, 4.5vw, 20px);
+  }
+
+  html,
+  body,
+  #root,
+  .site {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body {
@@ -1277,42 +1310,131 @@ code {
     line-height: 1.75;
   }
 
-  /* ---------- الواجهة (Hero) ---------- */
+  .container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ---------- الشريط العلوي ---------- */
+
+  .topbar__inner {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .brand {
+    min-width: 0;
+    max-width: 52vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(1.05rem, 5vw, 1.3rem);
+  }
+
+  .topbar__links {
+    flex: none;
+    gap: 2px;
+  }
+
+  .topbar__links a:not(:first-child) {
+    display: none;
+  }
+
+  .topbar__links a,
+  .topbar__ask {
+    min-height: 38px;
+    padding: 5px 9px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* ---------- الواجهة ---------- */
+
   .hero {
     min-height: calc(100svh - var(--topbar-h));
   }
 
-  .hero__inner {
-    min-height: calc(100svh - var(--topbar-h));
-    grid-template-columns: 1fr;
-    align-content: center;
-    gap: 18px;
-    padding-block: 48px 68px;
+  .hero::after {
+    height: 110px;
   }
 
-  .hero__eyebrow,
-  .hero__subtitle,
-  .hero__actions {
+  .hero__inner {
     position: relative;
-    z-index: 1;
+    min-height: calc(100svh - var(--topbar-h));
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    gap: 0;
+    padding-block:
+      clamp(44px, 8vh, 72px)
+      clamp(58px, 10vh, 86px);
+  }
+
+  .hero__copy {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hero__eyebrow {
+    position: relative;
+    z-index: 2;
+    gap: 8px;
+    font-size: clamp(0.78rem, 3.5vw, 0.9rem);
+  }
+
+  .hero__eyebrow::before {
+    width: 25px;
   }
 
   .hero__title {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     max-width: 7ch;
-    font-size: clamp(3.5rem, 17vw, 5.5rem);
+    margin-top: 0.14em;
+    font-size: clamp(3.25rem, 16vw, 5rem);
+    line-height: 1.02;
   }
 
+  .hero__subtitle {
+    position: relative;
+    z-index: 2;
+    max-width: min(31ch, 86vw);
+    margin-top: 1.05rem;
+    font-size: clamp(0.96rem, 4vw, 1.08rem);
+    line-height: 1.8;
+  }
+
+  .hero__actions {
+    position: relative;
+    z-index: 2;
+    gap: 12px 16px;
+    margin-top: 1.65rem;
+  }
+
+  .hero .btn {
+    min-height: 46px;
+    padding-inline: 21px;
+  }
+
+  .hero__note {
+    max-width: 18ch;
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  /*
+   * الرقم يبقى جزءاً من المشهد الافتتاحي،
+   * لكن كعنصر خلفي بدل ما يزاحم المحتوى.
+   */
   .hero__date {
     position: absolute;
-    inset-inline-end: -20px;
-    top: 5vh;
+    z-index: 0;
+    inset-inline-end: clamp(-34px, -6vw, -18px);
+    top: clamp(18px, 5vh, 48px);
     min-width: 0;
     flex-direction: row;
     align-items: baseline;
-    gap: 10px;
-    opacity: .8;
+    opacity: 1;
     pointer-events: none;
   }
 
@@ -1321,42 +1443,99 @@ code {
   }
 
   .hero__date strong {
-    font-size: clamp(8rem, 42vw, 12rem);
-    color: rgba(220, 194, 130, .1);
+    font-size: clamp(8rem, 43vw, 12rem);
+    line-height: 0.9;
+    color: rgba(220, 194, 130, 0.085);
   }
 
   .hero__date span {
     display: none;
   }
 
-  .topbar__links a:not(:first-child) {
-    display: none;
-  }
+  /* ---------- قسم الخريطة ---------- */
 
-  /* ---------- الخريطة والقسم ---------- */
   .explorer {
-    padding-block: 34px 44px;
+    width: 100%;
+    min-width: 0;
+    padding-block: 30px 44px;
     overflow: visible;
   }
 
   .explorer__head {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
 
   .explorer__head h2 {
-    font-size: clamp(1.8rem, 9vw, 2.6rem);
+    margin-bottom: 10px;
+    font-size: clamp(1.8rem, 9vw, 2.5rem);
+  }
+
+  .explorer__head p {
+    max-width: 34ch;
+    font-size: 0.94rem;
+    line-height: 1.7;
+  }
+
+  .explorer__grid,
+  .explorer__grid > * {
+    width: 100%;
+    min-width: 0;
   }
 
   .explorer__grid {
-    grid-template-columns: 1fr;
-    gap: 22px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
   }
 
-  /* ---------- اللوحة ---------- */
+  /*
+   * map.css عنده min-height للخريطة.
+   * على الجوال نخليه يتبع عرض الشاشة بدل ما يجبر
+   * مساحة أكبر من المتاح.
+   */
+  .map-frame {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .map-stage {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    aspect-ratio: 1000 / 820;
+  }
+
+  .map-svg,
+  .map-labels {
+    max-width: 100%;
+  }
+
+  .map-drill-header {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    gap: 8px;
+  }
+
+  .map-breadcrumb {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .map-place-select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* ---------- لوحة المنطقة ---------- */
+
   .panel {
     position: static;
     width: 100%;
-    padding: 20px 18px;
+    min-width: 0;
+    padding: 19px 16px;
     border-radius: 14px;
   }
 
@@ -1367,8 +1546,8 @@ code {
 
   .panel__current {
     min-height: 0;
-    padding-bottom: 18px;
-    margin-bottom: 18px;
+    padding-bottom: 17px;
+    margin-bottom: 17px;
   }
 
   .panel__swatch {
@@ -1389,6 +1568,7 @@ code {
   .panel__text {
     font-size: 0.9rem;
     line-height: 1.7;
+    overflow-wrap: anywhere;
   }
 
   .panel .btn {
@@ -1400,25 +1580,34 @@ code {
     font-size: 0.86rem;
   }
 
+  .panel__back {
+    max-width: 100%;
+  }
+
   /* ---------- شرائح المناطق ---------- */
+
   .chips {
     gap: 6px;
   }
 
   .chip {
     min-height: 40px;
+    max-width: 100%;
     padding: 4px 10px;
     gap: 6px;
     font-size: 0.78rem;
   }
 
   .chip__dot {
+    flex: none;
     width: 7px;
     height: 7px;
   }
 
   /* ---------- الحكاية ---------- */
+
   .story-section {
+    min-width: 0;
     padding-block: 32px 46px;
   }
 
@@ -1435,14 +1624,16 @@ code {
   }
 
   .story__tagline {
+    max-width: 32ch;
     padding-inline: 4px;
     font-size: 0.94rem;
     line-height: 1.75;
   }
 
-  /* ---------- الحقائق: صف واحد لكل عنصر ---------- */
+  /* ---------- الحقائق ---------- */
+
   .facts {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0;
     margin-bottom: 28px;
     background: transparent;
@@ -1453,9 +1644,10 @@ code {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 16px;
-    min-height: 74px;
-    padding: 13px 4px;
+    gap: 14px;
+    min-width: 0;
+    min-height: 70px;
+    padding: 12px 4px;
     background: transparent;
     text-align: start;
     border-bottom: 1px solid var(--line);
@@ -1466,18 +1658,31 @@ code {
   }
 
   .facts__item dt {
+    min-width: 0;
     font-size: 0.86rem;
   }
 
   .facts__item dd {
+    min-width: 0;
+    max-width: 48vw;
     margin: 0;
     font-size: 1.2rem;
     text-align: end;
+    overflow-wrap: anywhere;
   }
 
   /* ---------- الخط الزمني ---------- */
+
+  .timeline,
+  .timeline__stations,
+  .station,
+  .station__body {
+    width: 100%;
+    min-width: 0;
+  }
+
   .timeline {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0;
   }
 
@@ -1486,14 +1691,26 @@ code {
     z-index: 5;
     flex-direction: row;
     gap: 8px;
+
+    width: calc(100% + (var(--gutter) * 2));
+    max-width: none;
+
     margin-inline: calc(var(--gutter) * -1);
     padding: 10px var(--gutter);
+
     overflow-x: auto;
+    overflow-y: hidden;
+
     overscroll-behavior-inline: contain;
     scroll-snap-type: x proximity;
     scrollbar-width: none;
-    background: color-mix(in srgb, var(--sand) 94%, transparent);
+
+    background:
+      color-mix(in srgb, var(--sand) 94%, transparent);
+
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
     border-bottom: 1px solid var(--line);
   }
 
@@ -1512,7 +1729,8 @@ code {
   }
 
   .rail__step.is-active {
-    background: color-mix(in srgb, var(--green) 8%, transparent);
+    background:
+      color-mix(in srgb, var(--green) 8%, transparent);
   }
 
   .rail__dot {
@@ -1525,12 +1743,12 @@ code {
   }
 
   .station {
-    padding-block: 26px;
+    padding-block: 25px;
     scroll-margin-top: calc(var(--topbar-h) + 70px);
   }
 
   .station__meta {
-    gap: 8px;
+    gap: 7px 9px;
     margin-bottom: 12px;
   }
 
@@ -1539,15 +1757,37 @@ code {
   }
 
   .station__meta h3 {
-    font-size: 1.5rem;
+    font-size: clamp(1.4rem, 7vw, 1.55rem);
+  }
+
+  .station__meta p {
+    width: 100%;
+    font-size: 0.84rem;
   }
 
   .station__text,
   .station__list {
     font-size: 0.96rem;
+    overflow-wrap: anywhere;
   }
 
-  /* ---------- زر المساعد الذكي العائم ---------- */
+  .station__image {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ---------- التذييل ---------- */
+
+  .footer {
+    align-items: center;
+    gap: 6px 12px;
+    padding-block: 22px 78px;
+    font-size: 0.82rem;
+  }
+
+  /* ---------- زر المساعد ---------- */
+
   .chat-launcher {
     inset-inline-end: 14px;
     inset-block-end: max(14px, env(safe-area-inset-bottom));
@@ -1569,23 +1809,46 @@ code {
   }
 
   /* ---------- المحادثة ---------- */
+
   .chat__head {
-    padding: max(14px, env(safe-area-inset-top)) 14px 12px;
+    padding:
+      max(14px, env(safe-area-inset-top))
+      14px
+      12px;
   }
 
   .chat__list {
+    min-width: 0;
     padding: 14px;
   }
 
   .chat__form {
-    padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+    min-width: 0;
+    padding:
+      10px
+      10px
+      max(10px, env(safe-area-inset-bottom));
+  }
+
+  .chat__form textarea {
+    min-width: 0;
+  }
+
+  .chat__modebar {
+    min-width: 0;
+    flex-wrap: wrap;
   }
 }
+
+/* =========================================================
+   الجوال الأصغر
+   ========================================================= */
 
 @media (max-width: 560px) {
   .chat {
     inset: 0;
     width: 100%;
+    max-width: 100%;
     height: 100dvh;
     border: 0;
     border-radius: 0;
@@ -1593,20 +1856,123 @@ code {
 }
 
 @media (max-width: 420px) {
-  .hero__inner {
-    padding-block: 30px 38px;
+  :root {
+    --gutter: 14px;
   }
 
-  .facts {
-    grid-template-columns: 1fr;
+  .topbar__inner {
+    gap: 5px;
+  }
+
+  .brand {
+    max-width: 48vw;
+  }
+
+  .topbar__links a,
+  .topbar__ask {
+    padding-inline: 8px;
+  }
+
+  .hero__inner {
+    padding-block: 34px 48px;
+  }
+
+  .hero__title {
+    max-width: 7ch;
+    font-size: clamp(3rem, 16.5vw, 4.25rem);
+  }
+
+  .hero__subtitle {
+    max-width: 29ch;
+  }
+
+  .hero__actions {
+    gap: 10px;
+  }
+
+  .hero__note {
+    font-size: 0.78rem;
+  }
+
+  .hero__date {
+    inset-inline-end: -28px;
+    top: 28px;
+  }
+
+  .hero__date strong {
+    font-size: clamp(7.5rem, 43vw, 10rem);
   }
 
   .panel {
     padding: 18px 15px;
   }
 
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .facts__item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
   .rail__step {
     padding-inline: 8px;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* =========================================================
+   الشاشات الضيقة جدًا
+   ========================================================= */
+
+@media (max-width: 360px) {
+  .brand {
+    max-width: 44vw;
+    font-size: 1rem;
+  }
+
+  .topbar__links a {
+    display: none;
+  }
+
+  .topbar__ask {
+    padding-inline: 9px;
+    font-size: 0.76rem;
+  }
+
+  .hero__title {
+    font-size: clamp(2.8rem, 16vw, 3.6rem);
+  }
+
+  .hero__subtitle {
+    font-size: 0.92rem;
+  }
+
+  .hero .btn {
+    min-height: 44px;
+    padding-inline: 17px;
+    font-size: 0.9rem;
+  }
+
+  .hero__note {
+    max-width: 15ch;
+  }
+
+  .chip {
+    font-size: 0.75rem;
+  }
+
+  .facts__item {
+    gap: 8px;
+  }
+
+  .facts__item dd {
+    max-width: 44vw;
+    font-size: 1.08rem;
   }
 }
 
